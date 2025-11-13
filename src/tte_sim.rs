@@ -5,7 +5,14 @@ use statrs::distribution::{ContinuousCDF, DiscreteUniform, Exp, Normal};
 use statrs::statistics::{Data, OrderStatistics, Statistics};
 
 use crate::arm::Arm;
+use crate::delta::Delta;
 use crate::enrollment_sim::sim_enrollment_times;
+
+pub struct SurvOutcome {
+    arm: Arm,
+    t: f64,
+    delta: Delta,
+}
 
 pub fn run_n_tte_sims(
     n: usize,
@@ -115,14 +122,22 @@ pub fn run_tte_sim(
     let surv_times = trt_surv_samples.chain(ctrl_surv_samples);
     let drop_times = trt_drop_samples.chain(ctrl_drop_samples);
     let raw_data = izip!(arms, surv_times, drop_times);
-    let times_and_events: Vec<(Arm, f64, usize)> = raw_data
+    let times_and_events: Vec<SurvOutcome> = raw_data
         .map(|(arm, t_surv, t_drp)| {
             let t = t_surv.min(t_drp);
-            let delta = if t_surv < t_drp { 1 } else { 0 };
-            (arm, t, delta)
+            let delta = if t_surv < t_drp {
+                Delta::Observed
+            } else {
+                Delta::Censored
+            };
+            SurvOutcome {
+                arm: arm,
+                t: t,
+                delta: delta,
+            }
         })
         .sorted_by(|a, b| {
-            f64::partial_cmp(&a.1, &b.1).expect("attempted to sort survival data with NaNs")
+            f64::partial_cmp(&a.t, &b.t).expect("attempted to sort survival data with NaNs")
         })
         .collect();
 
@@ -131,12 +146,12 @@ pub fn run_tte_sim(
     let initial_value = (sample_size_trt, sample_size_ctrl);
     let n_at_each_time = std::iter::once(initial_value).chain(times_and_events.iter().scan(
         initial_value,
-        |current_count, (arm, _, _)| {
-            current_count.0 -= match arm {
+        |current_count, surv_outcome| {
+            current_count.0 -= match surv_outcome.arm {
                 Arm::Treatment => 1,
                 Arm::Control => 0,
             };
-            current_count.1 -= match arm {
+            current_count.1 -= match surv_outcome.arm {
                 Arm::Treatment => 0,
                 Arm::Control => 1,
             };
@@ -157,14 +172,14 @@ pub fn run_tte_sim(
     // Computing the actual logrank statistic
     let logrank = times_and_events.iter().zip(n_at_each_time).fold(
         (0.0, 0.0),
-        |acc, ((arm, _, delta), (n_treat, n_ctrl))| {
-            if *delta == 0 {
+        |acc, (surv_outcome, (n_treat, n_ctrl))| {
+            if surv_outcome.delta == Delta::Censored {
                 return acc;
             }
             #[allow(non_snake_case)]
             let E = (n_treat as f64) / (n_treat as f64 + n_ctrl as f64);
             #[allow(non_snake_case)]
-            let O = match *arm {
+            let O = match surv_outcome.arm {
                 Arm::Treatment => 1.0,
                 Arm::Control => 0.0,
             };

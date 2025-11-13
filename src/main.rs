@@ -1,5 +1,6 @@
 mod arm;
 mod computation_target;
+mod delta;
 mod enrollment_sim;
 mod hypothesis_type;
 mod surv_sim_settings;
