@@ -4,6 +4,7 @@ use rand::{SeedableRng, distributions::Distribution, rngs};
 use statrs::distribution::{ContinuousCDF, DiscreteUniform, Exp, Normal};
 use statrs::statistics::{Data, OrderStatistics, Statistics};
 
+use crate::arm::Arm;
 use crate::enrollment_sim::sim_enrollment_times;
 
 pub fn run_n_tte_sims(
@@ -52,10 +53,10 @@ pub fn run_tte_sim(
     let master_rng = rngs::StdRng::seed_from_u64(seed);
     let seed_distribution = DiscreteUniform::new(1000000, i64::MAX).unwrap();
     let mut seed_generator: DistIter<_, _, i64> = seed_distribution.sample_iter(master_rng);
-    let mut seed_1 = seed_generator.next().unwrap() as u64;
-    let mut seed_2 = seed_generator.next().unwrap() as u64;
-    let mut seed_3 = seed_generator.next().unwrap() as u64;
-    let mut seed_4 = seed_generator.next().unwrap() as u64;
+    let seed_1 = seed_generator.next().unwrap() as u64;
+    let seed_2 = seed_generator.next().unwrap() as u64;
+    let seed_3 = seed_generator.next().unwrap() as u64;
+    let seed_4 = seed_generator.next().unwrap() as u64;
 
     //----------------------------------------
     // Enrollment times
@@ -109,12 +110,12 @@ pub fn run_tte_sim(
     //----------------------------------------
     // Simulate actual data
     // 1 for treatment, 0 for control
-    let arms =
-        std::iter::repeat_n(1, sample_size_trt).chain(std::iter::repeat_n(0, sample_size_ctrl));
+    let arms = std::iter::repeat_n(Arm::Treatment, sample_size_trt)
+        .chain(std::iter::repeat_n(Arm::Control, sample_size_ctrl));
     let surv_times = trt_surv_samples.chain(ctrl_surv_samples);
     let drop_times = trt_drop_samples.chain(ctrl_drop_samples);
     let raw_data = izip!(arms, surv_times, drop_times);
-    let times_and_events: Vec<(usize, f64, usize)> = raw_data
+    let times_and_events: Vec<(Arm, f64, usize)> = raw_data
         .map(|(arm, t_surv, t_drp)| {
             let t = t_surv.min(t_drp);
             let delta = if t_surv < t_drp { 1 } else { 0 };
@@ -131,8 +132,14 @@ pub fn run_tte_sim(
     let n_at_each_time = std::iter::once(initial_value).chain(times_and_events.iter().scan(
         initial_value,
         |current_count, (arm, _, _)| {
-            current_count.0 -= arm;
-            current_count.1 -= 1 - arm;
+            current_count.0 -= match arm {
+                Arm::Treatment => 1,
+                Arm::Control => 0,
+            };
+            current_count.1 -= match arm {
+                Arm::Treatment => 0,
+                Arm::Control => 1,
+            };
             if *current_count == (0_usize, 0_usize) {
                 return None;
             }
@@ -157,7 +164,10 @@ pub fn run_tte_sim(
             #[allow(non_snake_case)]
             let E = (n_treat as f64) / (n_treat as f64 + n_ctrl as f64);
             #[allow(non_snake_case)]
-            let O = if *arm == 1 { 1.0 } else { 0.0 };
+            let O = match *arm {
+                Arm::Treatment => 1.0,
+                Arm::Control => 0.0,
+            };
             #[allow(non_snake_case)]
             let V = E * (1.0 - E);
 

@@ -1,3 +1,4 @@
+mod arm;
 mod computation_target;
 mod enrollment_sim;
 mod hypothesis_type;
