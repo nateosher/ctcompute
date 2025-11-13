@@ -1,8 +1,8 @@
 use itertools::{Itertools, izip};
 use rand::distributions::DistIter;
 use rand::{SeedableRng, distributions::Distribution, rngs};
-use statrs::distribution::{ContinuousCDF, DiscreteUniform, Exp, Normal};
-use statrs::statistics::{Data, OrderStatistics, Statistics};
+use statrs::distribution::{DiscreteUniform, Exp};
+use statrs::statistics::Statistics;
 
 use crate::arm::Arm;
 use crate::delta::Delta;
@@ -12,6 +12,13 @@ pub struct SurvOutcome {
     arm: Arm,
     t: f64,
     delta: Delta,
+}
+
+pub struct TTEResult {
+    n_events: usize,
+    enrollment_dur: f64,
+    trial_dur: f64,
+    logrank_stat: f64,
 }
 
 pub fn run_n_tte_sims(
@@ -25,7 +32,8 @@ pub fn run_n_tte_sims(
     enrollment_times: &Vec<f64>,
     enrollment_rates: &Vec<f64>,
     seed: u64,
-) -> Vec<f64> {
+) -> Vec<TTEResult> {
+    // TODO: add multithreading
     (0..n)
         .map(|i| {
             run_tte_sim(
@@ -43,6 +51,8 @@ pub fn run_n_tte_sims(
         .collect()
 }
 
+// TODO: add n_events vector parameter to allow for multiple
+//       looks/set # events to analyze
 pub fn run_tte_sim(
     sample_size_trt: usize,
     sample_size_ctrl: usize,
@@ -53,10 +63,9 @@ pub fn run_tte_sim(
     enrollment_times: &Vec<f64>,
     enrollment_rates: &Vec<f64>,
     seed: u64,
-) -> f64 {
+) -> TTEResult {
     //----------------------------------------
     // Choose seeds based on given seed
-    // TODO: simplify?
     let master_rng = rngs::StdRng::seed_from_u64(seed);
     let seed_distribution = DiscreteUniform::new(1000000, i64::MAX).unwrap();
     let mut seed_generator: DistIter<_, _, i64> = seed_distribution.sample_iter(master_rng);
@@ -116,7 +125,6 @@ pub fn run_tte_sim(
 
     //----------------------------------------
     // Simulate actual data
-    // 1 for treatment, 0 for control
     let arms = std::iter::repeat_n(Arm::Treatment, sample_size_trt)
         .chain(std::iter::repeat_n(Arm::Control, sample_size_ctrl));
     let surv_times = trt_surv_samples.chain(ctrl_surv_samples);
@@ -141,6 +149,31 @@ pub fn run_tte_sim(
         })
         .collect();
 
+    //----------------------------------------
+    // Compute logrank
+    let logrank_stat = compute_logrank(&times_and_events, sample_size_trt, sample_size_ctrl);
+    let enrollment_dur = patient_enrollment_times.max();
+    let trial_dur = Statistics::max(times_and_events.iter().map(|surv_outcome| surv_outcome.t));
+    let n_events: usize = times_and_events
+        .iter()
+        .map(|surv_outcome| match surv_outcome.delta {
+            Delta::Censored => 0,
+            Delta::Observed => 1,
+        })
+        .sum();
+    TTEResult {
+        n_events,
+        enrollment_dur,
+        trial_dur,
+        logrank_stat,
+    }
+}
+
+fn compute_logrank(
+    times_and_events: &Vec<SurvOutcome>,
+    sample_size_trt: usize,
+    sample_size_ctrl: usize,
+) -> f64 {
     //----------------------------------------
     // Compute number of events at each time
     let initial_value = (sample_size_trt, sample_size_ctrl);
