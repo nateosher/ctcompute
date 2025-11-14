@@ -1,5 +1,3 @@
-use itertools::Itertools;
-use rand::distributions::DistIter;
 use rand::{
     SeedableRng,
     distributions::{Distribution, WeightedIndex},
@@ -7,12 +5,17 @@ use rand::{
 };
 use statrs::distribution::Uniform;
 
+pub struct EnrollmentSimResult {
+    pub enrollment_times: Vec<f64>,
+    pub expected_time: f64,
+}
+
 pub fn sim_enrollment_times(
     n: usize,
     enrollment_times: &Vec<f64>,
     enrollment_rates: &Vec<f64>,
     seed: u64,
-) -> Vec<f64> {
+) -> EnrollmentSimResult {
     //----------------------------------------
     // Set up enrollment rates/times
     let mut time_lengths: Vec<f64> = enrollment_times.windows(2).map(|w| w[1] - w[0]).collect();
@@ -61,5 +64,8 @@ pub fn sim_enrollment_times(
 
     patient_enrollment_times.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-    patient_enrollment_times
+    EnrollmentSimResult {
+        enrollment_times: patient_enrollment_times,
+        expected_time: time_lengths.iter().sum(),
+    }
 }

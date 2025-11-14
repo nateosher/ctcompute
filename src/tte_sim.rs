@@ -6,7 +6,7 @@ use statrs::statistics::Statistics;
 
 use crate::arm::Arm;
 use crate::delta::Delta;
-use crate::enrollment_sim::sim_enrollment_times;
+use crate::enrollment_sim::{EnrollmentSimResult, sim_enrollment_times};
 
 pub struct SurvOutcome {
     arm: Arm,
@@ -14,9 +14,11 @@ pub struct SurvOutcome {
     delta: Delta,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct TTEResult {
     n_events: usize,
     enrollment_dur: f64,
+    expected_enrollment_dur: f64,
     trial_dur: f64,
     logrank_stat: f64,
 }
@@ -76,7 +78,10 @@ pub fn run_tte_sim(
 
     //----------------------------------------
     // Enrollment times
-    let patient_enrollment_times = sim_enrollment_times(
+    let EnrollmentSimResult {
+        enrollment_times: patient_enrollment_times,
+        expected_time: expected_enrollment_dur,
+    } = sim_enrollment_times(
         sample_size_trt + sample_size_ctrl, // n
         enrollment_times,                   // enrollment_times
         enrollment_rates,                   // enrollment_rates
@@ -138,11 +143,7 @@ pub fn run_tte_sim(
             } else {
                 Delta::Censored
             };
-            SurvOutcome {
-                arm: arm,
-                t: t,
-                delta: delta,
-            }
+            SurvOutcome { arm, t, delta }
         })
         .sorted_by(|a, b| {
             f64::partial_cmp(&a.t, &b.t).expect("attempted to sort survival data with NaNs")
@@ -164,6 +165,7 @@ pub fn run_tte_sim(
     TTEResult {
         n_events,
         enrollment_dur,
+        expected_enrollment_dur,
         trial_dur,
         logrank_stat,
     }
@@ -236,8 +238,8 @@ mod tests {
             50,                    // sample_size_ctrl
             0.2,                   // lambda_trt
             0.1,                   // lambda_ctrl
-            113.9,                 // lambda_trt_dropout
-            113.9,                 // lambda_ctrl_dropout
+            0.00877,               // lambda_trt_dropout
+            0.00877,               // lambda_ctrl_dropout
             &vec![1.0, 3.0, 6.0],  // enrollment times
             &vec![1.0, 5.0, 11.0], //enrollment rates
             24601,                 // seed
