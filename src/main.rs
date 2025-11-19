@@ -1,8 +1,10 @@
 mod arm;
 mod computation_target;
+mod ctsim_err;
 mod delta;
 mod enrollment_sim;
 mod hypothesis_type;
+mod spending_fcns;
 mod surv_sim_settings;
 mod tte_compute;
 mod tte_sim;

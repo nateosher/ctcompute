@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 itertools = "0.14.0"
+probability-rs = "0.1.2"
 rand = "0.8"
 statrs = { version = "0.18.0", features = ["rand"] }
+thiserror = "2.0.17"
