@@ -4,6 +4,7 @@ mod ctsim_err;
 mod delta;
 mod enrollment_sim;
 mod hypothesis_type;
+mod quadrature;
 mod spending_fcns;
 mod surv_sim_settings;
 mod tte_compute;

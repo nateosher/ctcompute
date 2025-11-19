@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+integrate = "0.1.11"
 itertools = "0.14.0"
 probability-rs = "0.1.2"
 rand = "0.8"
