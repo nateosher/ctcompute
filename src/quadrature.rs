@@ -1,19 +1,15 @@
-pub fn std_normal_pdf(z: f64) -> f64 {
-    (-z * z / 2.0).exp() / (2.0 * std::f64::consts::PI).sqrt()
-}
-
 // z are locations, w are weights
 #[derive(Debug)]
-struct Quadrature {
-    z: Vec<f64>,
-    w: Vec<f64>,
+pub struct Quadrature {
+    pub z: Vec<f64>,
+    pub w: Vec<f64>,
 }
 
 // Jennison and Turnbull, 356
 // TODO: error handling
 impl Quadrature {
     #[allow(non_snake_case)]
-    fn new(theta: f64, I_j: f64, r: usize, a: f64, b: f64) -> Self {
+    pub fn new(theta: f64, I_j: f64, r: usize, a: f64, b: f64) -> Self {
         let theta_sqrt_I_j = theta * I_j.sqrt();
         let r_f = r as f64;
 
@@ -102,6 +98,7 @@ mod tests {
     use std::f64;
 
     use super::*;
+    use crate::integrate::std_normal_pdf;
 
     #[test]
     fn standard_normal_pdf_1() {
@@ -167,7 +164,6 @@ mod tests {
             .zip(test_quad.w.iter())
             .map(|(z, w)| w * std_normal_pdf(*z))
             .sum();
-        println!("{std_normal_integral}");
         assert!((std_normal_integral - 0.9297258).abs() < 0.0000001);
     }
 }
