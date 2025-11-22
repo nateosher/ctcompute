@@ -12,12 +12,13 @@ pub enum SpendingFcnErr {
     OutOfBounds(f64),
 }
 
-fn lan_demets_obrien_fleming_vec(v: &Vec<f64>, alpha: f64) -> Vec<Result<f64, CtsimErr>> {
+pub fn lan_demets_obrien_fleming_vec(v: &Vec<f64>, alpha: f64) -> Vec<Result<f64, CtsimErr>> {
     v.iter()
         .map(|&t| lan_demets_obrien_fleming(t, alpha))
         .collect()
 }
 
+// TODO: check this formula, it seems wrong
 fn lan_demets_obrien_fleming(t: f64, alpha: f64) -> Result<f64, CtsimErr> {
     if t < 0.0 || t > 1.0 {
         Err(CtsimErr::SpendingFcn(SpendingFcnErr::OutOfBounds(t)))
@@ -40,7 +41,8 @@ mod tests {
         if let Err(e) = lan_demets_obrien_fleming(1.1, 0.05) {
             assert_eq!(
                 String::from(
-                    "while evaluating spending function: arguments to spending function should be in [0, 1]; got 1.1"
+                    "while evaluating spending function: arguments to \
+                    spending function should be in [0, 1]; got 1.1"
                 ),
                 format!("{}", e)
             );

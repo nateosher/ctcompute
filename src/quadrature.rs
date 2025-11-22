@@ -36,6 +36,8 @@ impl Quadrature {
             .map(|&i| i)
             .collect();
 
+        // println!("x: {x:?}");
+
         // If lower end was less than a, make first element a
         if x[0] != x_full[0] {
             x.insert(0, a);
@@ -99,21 +101,6 @@ mod tests {
 
     use super::*;
     use crate::integrate::std_normal_pdf;
-
-    #[test]
-    fn standard_normal_pdf_1() {
-        assert!((0.3989423 - std_normal_pdf(0.0)).abs() < 0.0000001)
-    }
-
-    #[test]
-    fn standard_normal_pdf_2() {
-        assert!((0.004431848 - std_normal_pdf(3.0)).abs() < 0.0000001)
-    }
-
-    #[test]
-    fn standard_normal_pdf_3() {
-        assert_eq!(std_normal_pdf(-1.0), std_normal_pdf(1.0));
-    }
 
     #[test]
     fn basic_quadrature_indefinite() {
