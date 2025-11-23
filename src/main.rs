@@ -11,7 +11,7 @@ mod surv_sim_settings;
 mod tte_compute;
 mod tte_sim;
 
-use crate::integrate::find_bounds;
+use crate::{integrate::find_bounds, spending_fcns::lan_demets_obrien_fleming_vec};
 use enrollment_sim::sim_enrollment_times;
 use std::time::Instant;
 use tte_sim::run_tte_sim;
@@ -63,6 +63,31 @@ fn main() {
         patient_enrollment_sim.enrollment_times
     );
 
-    let bounds = find_bounds(vec![0.01476898, 0.05], vec![0.7, 1.0], 32, 0.0001);
-    println!("bounds: {:?}", bounds);
+    println!("----------------------------------------");
+    println!("");
+
+    let bounds_1 = find_bounds(
+        lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05).unwrap(),
+        vec![0.3, 0.6, 1.0],
+        32,
+        0.0001,
+    );
+    println!("bounds 1: {:?}", bounds_1);
+
+    let ldof_1 = lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05);
+    println!("ldof 1: {ldof_1:?}");
+
+    println!("----------------------------------------");
+    println!("");
+
+    let bounds_2 = find_bounds(
+        lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05).unwrap(),
+        vec![0.7, 1.0],
+        32,
+        0.0001,
+    );
+    println!("bounds 2: {:?}", bounds_2);
+
+    let ldof_2 = lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05);
+    println!("ldof 2: {ldof_2:?}");
 }

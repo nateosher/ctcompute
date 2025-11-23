@@ -9,6 +9,12 @@ pub enum NormalDistErr {
     QuantileOutOfBounds(f64),
 }
 
+impl Into<CtsimErr> for NormalDistErr {
+    fn into(self) -> CtsimErr {
+        CtsimErr::NormalDist(self)
+    }
+}
+
 pub fn std_normal_pdf(z: f64) -> f64 {
     (-z * z / 2.0).exp() / (2.0 * std::f64::consts::PI).sqrt()
 }
@@ -20,7 +26,7 @@ pub fn std_normal_cdf(z: f64) -> f64 {
 
 pub fn std_normal_quantile(q: f64) -> Result<f64, CtsimErr> {
     if q < 0.0 || q > 1.0 {
-        return Err(CtsimErr::NormalDist(NormalDistErr::QuantileOutOfBounds(q)));
+        return Err(NormalDistErr::QuantileOutOfBounds(q).into());
     }
     let std_normal = Normal::new(0.0, 1.0).unwrap();
     let z_q = std_normal.inv_cdf(q);
@@ -145,6 +151,12 @@ pub enum TrialBoundsError {
     FailedToConverge(f64, f64, f64),
 }
 
+impl Into<CtsimErr> for TrialBoundsError {
+    fn into(self) -> CtsimErr {
+        CtsimErr::TrialBounds(self)
+    }
+}
+
 // Information fractions, alpha spend, and quadrature
 // size (r), finds bounds that satisfy constraints
 // tol is tolerance, i.e. how close to true alpha should
@@ -215,11 +227,7 @@ pub fn find_bounds(
         }
 
         if diff.abs() > tol {
-            return Err(CtsimErr::TrialBounds(TrialBoundsError::FailedToConverge(
-                cur_alpha,
-                target_alpha,
-                tol,
-            )));
+            return Err(TrialBoundsError::FailedToConverge(cur_alpha, target_alpha, tol).into());
         }
     }
 
