@@ -67,8 +67,8 @@ fn main() {
     println!("");
 
     let bounds_1 = find_bounds(
-        lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05).unwrap(),
-        vec![0.3, 0.6, 1.0],
+        &lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05).unwrap(),
+        &vec![0.3, 0.6, 1.0],
         32,
         0.0001,
     );
@@ -81,8 +81,8 @@ fn main() {
     println!("");
 
     let bounds_2 = find_bounds(
-        lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05).unwrap(),
-        vec![0.7, 1.0],
+        &lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05).unwrap(),
+        &vec![0.7, 1.0],
         32,
         0.0001,
     );

@@ -42,21 +42,15 @@ fn check_spending_fcn_arguments(t_v: &Vec<f64>, alpha: f64) -> Result<(), CtsimE
 // Returns cumulative alpha spent at each look
 // Note to self: gsDesign splits alpha before applying spending
 // function; keep this in mind when comparing
+// EAST does as well; seems like this is standard
 // TODO: refactor into a general spending vector computation function
 // that takes spending function as argument (probably through enum)
 pub fn lan_demets_obrien_fleming_vec(t_v: &Vec<f64>, alpha: f64) -> Result<Vec<f64>, CtsimErr> {
     check_spending_fcn_arguments(t_v, alpha)?;
-    let timepoint_spend: Vec<f64> = t_v
+    let cumulative_spend: Vec<f64> = t_v
         .iter()
         .map(|&t| lan_demets_obrien_fleming(t, alpha))
         .collect::<Result<Vec<f64>, CtsimErr>>()?;
-
-    let mut cumulative_spend = timepoint_spend.clone();
-    // First and last timepoint spends don't need to be adjusted
-    for i in 1..cumulative_spend.len() - 1 {
-        println!("cumulative spend updated");
-        cumulative_spend[i] += cumulative_spend[i - 1];
-    }
 
     Ok(cumulative_spend)
 }

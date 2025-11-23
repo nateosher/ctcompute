@@ -1,6 +1,7 @@
 use crate::{
     integrate::{NormalDistErr, TrialBoundsError},
     spending_fcns::SpendingFcnErr,
+    tte_compute::TTEComputeError,
 };
 use thiserror::Error;
 
@@ -12,4 +13,6 @@ pub enum CtsimErr {
     NormalDist(NormalDistErr),
     #[error("while computing trial bounds: {0}")]
     TrialBounds(TrialBoundsError),
+    #[error("while computing TTE characteristic: {0}")]
+    TTECompute(TTEComputeError),
 }

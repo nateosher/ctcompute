@@ -163,8 +163,8 @@ impl Into<CtsimErr> for TrialBoundsError {
 // we shoot for
 #[allow(non_snake_case)]
 pub fn find_bounds(
-    alpha: Vec<f64>,
-    I: Vec<f64>,
+    alpha: &Vec<f64>,
+    I_fractions: &Vec<f64>,
     r: usize,
     tol: f64,
 ) -> Result<Vec<(f64, f64)>, CtsimErr> {
@@ -192,7 +192,7 @@ pub fn find_bounds(
         let mut mid = (lower_bound + upper_bound) / 2.0;
         bounds.push((-mid, mid));
 
-        let mut cur_alpha: f64 = psi_k(&bounds, &I[0..=i], 0.0, r)[i];
+        let mut cur_alpha: f64 = psi_k(&bounds, &I_fractions[0..=i], 0.0, r)[i];
         let target_alpha = alpha_increments[i];
         let mut diff: f64 = target_alpha - cur_alpha;
         // println!("---------------------------------------");
@@ -216,7 +216,7 @@ pub fn find_bounds(
             bounds[i].1 = mid;
 
             // compute new alpha
-            cur_alpha = psi_k(&bounds, &I[0..=i], 0.0, r)[i];
+            cur_alpha = psi_k(&bounds, &I_fractions[0..=i], 0.0, r)[i];
             // println!("---------------------------------------");
             // println!("mid: {mid}");
             // println!("bounds {:?}", bounds);
@@ -335,7 +335,7 @@ mod tests {
     #[test]
     fn ldof_bounds_2_looks() {
         // This is the cumulative alpha spent for LDOF per ldBounds(c(0.7, 1.0))
-        let bounds = find_bounds(vec![0.01476898, 0.05], vec![0.7, 1.0], 32, 0.0001).unwrap();
+        let bounds = find_bounds(&vec![0.01476898, 0.05], &vec![0.7, 1.0], 32, 0.0001).unwrap();
 
         assert!((bounds[0].1 - 2.437995).abs() < 0.001);
         assert!((bounds[1].1 - 1.999873).abs() < 0.001);
@@ -345,8 +345,8 @@ mod tests {
     fn ldof_bounds_3_looks() {
         // This is the cumulative alpha spent for LDOF per ldBounds(c(0.3, 0.6, 1.0))
         let bounds = find_bounds(
-            vec![0.00008545157, 0.007616127, 0.05],
-            vec![0.3, 0.6, 1.0],
+            &vec![0.00008545157, 0.007616127, 0.05],
+            &vec![0.3, 0.6, 1.0],
             32,
             0.0001,
         )
