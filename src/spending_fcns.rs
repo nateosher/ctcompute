@@ -3,7 +3,7 @@ use probability_rs::{Continuous, Distribution, dist::normal::Normal};
 use thiserror::Error;
 
 pub enum SpendingFcn {
-    LDOF,
+    LDOF, // Lan-Demets Obrien Fleming
 }
 
 #[derive(Error, Debug)]
@@ -16,6 +16,8 @@ pub enum SpendingFcnErr {
     TimeVectorEmpty,
     #[error("total alpha spent should be in (0, 1); got {0}")]
     BadAlpha(f64),
+    #[error("must specify at least one spending function")]
+    NoSpendingFunctionSpecified,
 }
 
 impl Into<CtsimErr> for SpendingFcnErr {
@@ -24,19 +26,11 @@ impl Into<CtsimErr> for SpendingFcnErr {
     }
 }
 
-fn check_spending_fcn_arguments(t_v: &Vec<f64>, alpha: f64) -> Result<(), CtsimErr> {
-    if t_v.is_empty() {
-        return Err(SpendingFcnErr::TimeVectorEmpty.into());
-    }
-    if let Some(&last_spend) = t_v.last()
-        && last_spend != 1.0
-    {
-        return Err(SpendingFcnErr::BadLastSpend(last_spend).into());
-    }
-    if alpha <= 0.0 || alpha >= 1.0 {
-        return Err(SpendingFcnErr::BadAlpha(alpha).into());
-    }
-    Ok(())
+#[derive(Debug)]
+pub enum AlphaSpendingValues {
+    OneSidedUpper(Vec<f64>),
+    OneSidedLower(Vec<f64>),
+    TwoSided((Vec<f64>, Vec<f64>)),
 }
 
 // Returns cumulative alpha spent at each look
@@ -45,14 +39,66 @@ fn check_spending_fcn_arguments(t_v: &Vec<f64>, alpha: f64) -> Result<(), CtsimE
 // EAST does as well; seems like this is standard
 // TODO: refactor into a general spending vector computation function
 // that takes spending function as argument (probably through enum)
-pub fn lan_demets_obrien_fleming_vec(t_v: &Vec<f64>, alpha: f64) -> Result<Vec<f64>, CtsimErr> {
-    check_spending_fcn_arguments(t_v, alpha)?;
-    let cumulative_spend: Vec<f64> = t_v
-        .iter()
-        .map(|&t| lan_demets_obrien_fleming(t, alpha))
-        .collect::<Result<Vec<f64>, CtsimErr>>()?;
+pub fn compute_spending_vec(
+    look_fractions: &Vec<f64>,
+    alpha: f64,
+    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+) -> Result<AlphaSpendingValues, CtsimErr> {
+    //----------------------------------------
+    // Check arguments
+    if look_fractions.is_empty() {
+        return Err(SpendingFcnErr::TimeVectorEmpty.into());
+    }
+    if let Some(&last_spend) = look_fractions.last()
+        && last_spend != 1.0
+    {
+        return Err(SpendingFcnErr::BadLastSpend(last_spend).into());
+    }
+    if alpha <= 0.0 || alpha >= 1.0 {
+        return Err(SpendingFcnErr::BadAlpha(alpha).into());
+    }
+    if maybe_lower_spending_fcn_type.is_none() && maybe_upper_spending_fcn_type.is_none() {
+        return Err(SpendingFcnErr::NoSpendingFunctionSpecified.into());
+    }
 
-    Ok(cumulative_spend)
+    //----------------------------------------
+    // Compute alpha spend
+    let maybe_lower_spending_fcn = match maybe_lower_spending_fcn_type {
+        Some(SpendingFcn::LDOF) => Some(lan_demets_obrien_fleming),
+        None => None,
+    };
+
+    let maybe_lower_spending_bound: Option<Vec<f64>> = match maybe_lower_spending_fcn {
+        Some(spending_fcn) => look_fractions
+            .iter()
+            .map(|&t| spending_fcn(t, alpha))
+            .collect::<Result<Vec<f64>, CtsimErr>>()
+            .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
+        None => None,
+    };
+
+    let maybe_upper_spending_fcn = match maybe_upper_spending_fcn_type {
+        Some(SpendingFcn::LDOF) => Some(lan_demets_obrien_fleming),
+        None => None,
+    };
+
+    let maybe_upper_spending_bound: Option<Vec<f64>> = match maybe_upper_spending_fcn {
+        Some(spending_fcn) => look_fractions
+            .iter()
+            .map(|&t| spending_fcn(t, alpha))
+            .collect::<Result<Vec<f64>, CtsimErr>>()
+            .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
+        None => None,
+    };
+
+    match (maybe_lower_spending_bound, maybe_upper_spending_bound) {
+        (Some(lower), Some(upper)) => Ok(AlphaSpendingValues::TwoSided((lower, upper))),
+        (None, Some(upper)) => Ok(AlphaSpendingValues::OneSidedUpper(upper)),
+
+        (Some(lower), None) => Ok(AlphaSpendingValues::OneSidedUpper(lower)),
+        _ => unreachable!(),
+    }
 }
 
 fn lan_demets_obrien_fleming(t: f64, alpha: f64) -> Result<f64, CtsimErr> {
@@ -60,7 +106,7 @@ fn lan_demets_obrien_fleming(t: f64, alpha: f64) -> Result<f64, CtsimErr> {
         Err(SpendingFcnErr::OutOfBounds(t).into())
     } else {
         let std_normal = Normal::new(0.0, 1.0).unwrap();
-        let z_alpha_d_2 = std_normal.inv_cdf(1.0 - alpha / 2.0);
+        let z_alpha_d_2 = std_normal.inv_cdf(alpha / 2.0);
         let spend = (2.0 - 2.0 * std_normal.cdf(z_alpha_d_2 / t.sqrt())).min(alpha);
         Ok(spend)
     }
@@ -89,6 +135,45 @@ mod tests {
 
     #[test]
     fn ldof_0_75_0_05() {
-        assert!(lan_demets_obrien_fleming(0.75, 0.05).is_ok_and(|x| (x - 0.0236).abs() < 0.0001))
+        assert!(
+            lan_demets_obrien_fleming(0.75, 0.025).is_ok_and(|x| (x - 0.009649325).abs() < 0.0001)
+        )
+    }
+
+    #[test]
+    fn ldof_2_look_005() {
+        let alpha_spend = compute_spending_vec(
+            &vec![0.7, 1.0],
+            0.025,
+            Some(SpendingFcn::LDOF),
+            Some(SpendingFcn::LDOF),
+        )
+        .unwrap();
+
+        if let AlphaSpendingValues::TwoSided((lower, upper)) = alpha_spend {
+            assert!((lower[0] - 0.007384489).abs() < 0.0001);
+            assert!((upper[0] - 0.007384489).abs() < 0.0001)
+        } else {
+            panic!()
+        }
+    }
+    #[test]
+    fn ldof_3_look_0025() {
+        let alpha_spend = compute_spending_vec(
+            &vec![0.3, 0.6, 1.0],
+            0.025,
+            Some(SpendingFcn::LDOF),
+            Some(SpendingFcn::LDOF),
+        )
+        .unwrap();
+
+        if let AlphaSpendingValues::TwoSided((lower, upper)) = alpha_spend {
+            assert!((lower[0] - 4.272579e-05).abs() < 0.0001);
+            assert!((upper[0] - 4.272579e-05).abs() < 0.0001);
+            assert!((lower[1] - lower[0] - 3.765338e-03).abs() < 0.0001);
+            assert!((upper[1] - lower[0] - 3.765338e-03).abs() < 0.0001);
+        } else {
+            panic!()
+        }
     }
 }

@@ -3,15 +3,13 @@ mod computation_target;
 mod ctsim_err;
 mod delta;
 mod enrollment_sim;
-mod hypothesis_type;
 mod integrate;
 mod quadrature;
 mod spending_fcns;
-mod surv_sim_settings;
 mod tte_compute;
 mod tte_sim;
 
-use crate::{integrate::find_bounds, spending_fcns::lan_demets_obrien_fleming_vec};
+use crate::{integrate::find_bounds, spending_fcns::compute_spending_vec};
 use enrollment_sim::sim_enrollment_times;
 use std::time::Instant;
 use tte_sim::run_tte_sim;
@@ -66,28 +64,50 @@ fn main() {
     println!("----------------------------------------");
     println!("");
 
-    let bounds_1 = find_bounds(
-        &lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05).unwrap(),
-        &vec![0.3, 0.6, 1.0],
-        32,
-        0.0001,
-    );
-    println!("bounds 1: {:?}", bounds_1);
+    // let bounds_1 = find_bounds(
+    //     &compute_spending_vec(
+    //         &vec![0.3, 0.6, 1.0],
+    //         0.05,
+    //         hypothesis_type::HypothesisType::NotEqual,
+    //         spending_fcns::SpendingFcn::LDOF,
+    //     )
+    //     .unwrap(),
+    //     &vec![0.3, 0.6, 1.0],
+    //     32,
+    //     0.0001,
+    // );
+    // println!("bounds 1: {:?}", bounds_1);
 
-    let ldof_1 = lan_demets_obrien_fleming_vec(&vec![0.3, 0.6, 1.0], 0.05);
-    println!("ldof 1: {ldof_1:?}");
+    // let ldof_1 = lan_demets_obrien_fleming_vec(
+    //     &vec![0.3, 0.6, 1.0],
+    //     0.05,
+    //     hypothesis_type::HypothesisType::NotEqual,
+    //     spending_fcns::SpendingFcn::LDOF,
+    // );
+    // println!("ldof 1: {ldof_1:?}");
 
-    println!("----------------------------------------");
-    println!("");
+    // println!("----------------------------------------");
+    // println!("");
 
-    let bounds_2 = find_bounds(
-        &lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05).unwrap(),
-        &vec![0.7, 1.0],
-        32,
-        0.0001,
-    );
-    println!("bounds 2: {:?}", bounds_2);
+    // let bounds_2 = find_bounds(
+    //     &lan_demets_obrien_fleming_vec(
+    //         &vec![0.7, 1.0],
+    //         0.05,
+    //         hypothesis_type::HypothesisType::NotEqual,
+    //         spending_fcns::SpendingFcn::LDOF,
+    //     )
+    //     .unwrap(),
+    //     &vec![0.7, 1.0],
+    //     32,
+    //     0.0001,
+    // );
+    // println!("bounds 2: {:?}", bounds_2);
 
-    let ldof_2 = lan_demets_obrien_fleming_vec(&vec![0.7, 1.0], 0.05);
-    println!("ldof 2: {ldof_2:?}");
+    // let ldof_2 = lan_demets_obrien_fleming_vec(
+    //     &vec![0.7, 1.0],
+    //     0.05,
+    //     hypothesis_type::HypothesisType::NotEqual,
+    //     spending_fcns::SpendingFcn::LDOF,
+    // );
+    // println!("ldof 2: {ldof_2:?}");
 }
