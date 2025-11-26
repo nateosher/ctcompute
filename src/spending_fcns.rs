@@ -34,11 +34,8 @@ pub enum AlphaSpendingValues {
 }
 
 // Returns cumulative alpha spent at each look
-// Note to self: gsDesign splits alpha before applying spending
-// function; keep this in mind when comparing
-// EAST does as well; seems like this is standard
-// TODO: refactor into a general spending vector computation function
-// that takes spending function as argument (probably through enum)
+// TODO: ensure spending is monotonically increasing, jumps
+// are > 0, and final value = alpha
 pub fn compute_spending_vec(
     look_fractions: &Vec<f64>,
     alpha: f64,

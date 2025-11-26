@@ -1,6 +1,5 @@
 use crate::{
-    integrate::{NormalDistErr, TrialBoundsError},
-    spending_fcns::SpendingFcnErr,
+    integrate::TrialBoundsError, spending_fcns::SpendingFcnErr, std_normal::NormalDistErr,
     tte_compute::TTEComputeError,
 };
 use thiserror::Error;
