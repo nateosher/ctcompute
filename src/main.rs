@@ -10,7 +10,10 @@ mod std_normal;
 mod tte_compute;
 mod tte_sim;
 
-use crate::{integrate::find_bounds, spending_fcns::compute_spending_vec};
+use crate::{
+    integrate::{find_bounds, psi_k},
+    spending_fcns::compute_spending_vec,
+};
 use enrollment_sim::sim_enrollment_times;
 use std::time::Instant;
 use tte_sim::run_tte_sim;
@@ -62,53 +65,17 @@ fn main() {
         patient_enrollment_sim.enrollment_times
     );
 
-    println!("----------------------------------------");
-    println!("");
+    let test_integral = psi_k(
+        &vec![
+            (-3.928573, 3.928573),
+            (-2.669971, 2.669971),
+            (-1.981025, 1.981025),
+        ],
+        &vec![0.3, 0.6, 1.0],
+        3.24,
+        integrate::IntegralType::Upper,
+        32,
+    );
 
-    // let bounds_1 = find_bounds(
-    //     &compute_spending_vec(
-    //         &vec![0.3, 0.6, 1.0],
-    //         0.05,
-    //         hypothesis_type::HypothesisType::NotEqual,
-    //         spending_fcns::SpendingFcn::LDOF,
-    //     )
-    //     .unwrap(),
-    //     &vec![0.3, 0.6, 1.0],
-    //     32,
-    //     0.0001,
-    // );
-    // println!("bounds 1: {:?}", bounds_1);
-
-    // let ldof_1 = lan_demets_obrien_fleming_vec(
-    //     &vec![0.3, 0.6, 1.0],
-    //     0.05,
-    //     hypothesis_type::HypothesisType::NotEqual,
-    //     spending_fcns::SpendingFcn::LDOF,
-    // );
-    // println!("ldof 1: {ldof_1:?}");
-
-    // println!("----------------------------------------");
-    // println!("");
-
-    // let bounds_2 = find_bounds(
-    //     &lan_demets_obrien_fleming_vec(
-    //         &vec![0.7, 1.0],
-    //         0.05,
-    //         hypothesis_type::HypothesisType::NotEqual,
-    //         spending_fcns::SpendingFcn::LDOF,
-    //     )
-    //     .unwrap(),
-    //     &vec![0.7, 1.0],
-    //     32,
-    //     0.0001,
-    // );
-    // println!("bounds 2: {:?}", bounds_2);
-
-    // let ldof_2 = lan_demets_obrien_fleming_vec(
-    //     &vec![0.7, 1.0],
-    //     0.05,
-    //     hypothesis_type::HypothesisType::NotEqual,
-    //     spending_fcns::SpendingFcn::LDOF,
-    // );
-    // println!("ldof 2: {ldof_2:?}");
+    println!("test integral: {test_integral:?}");
 }

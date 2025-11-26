@@ -65,8 +65,7 @@ pub fn tte_compute_sample_size(
     if cur_power > target_power {
         sufficient_total_informations.push(cur_I);
     }
-    // println!("cur power: {cur_power}");
-    // println!("cur I: {cur_I}");
+
     while (cur_power - target_power).abs() > tol && (lower_I - upper_I).abs() > tol {
         if cur_power > target_power {
             upper_I = cur_I;
@@ -86,16 +85,12 @@ pub fn tte_compute_sample_size(
         if cur_power > target_power {
             sufficient_total_informations.push(cur_I);
         }
-
-        // println!("cur power: {cur_power}");
-        // println!("cur I: {cur_I}");
     }
 
     if (cur_power - target_power).abs() > tol {
         return Err(TTEComputeError::FailedToConverge(ComputationTarget::SampleSize).into());
     }
 
-    // println!("{sufficient_total_informations:?}");
     let minimal_I = match sufficient_total_informations.into_iter().reduce(f64::min) {
         Some(i) => i,
         None => Err(TTEComputeError::NoValueFound(ComputationTarget::SampleSize).into())?,
