@@ -1,47 +1,49 @@
 use std::f64;
 
 use crate::{
-    computation_target::ComputationTarget,
     ctsim_err::CtsimErr,
     integrate::{IntegralType, find_bounds, psi_k},
     spending_fcns::{SpendingFcn, compute_spending_vec},
+    std_normal::{std_normal_cdf, std_normal_quantile},
 };
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum TTEComputeError {
-    #[error("failed to converge while computing TTE {0:?}")]
-    FailedToConverge(ComputationTarget),
-    #[error("no valid value found while computing TTE {0:?}")]
-    NoValueFound(ComputationTarget),
+pub enum ThetaComputeError {
+    #[error("failed to converge while computing theta")]
+    FailedToConverge,
+    #[error("no valid value found while computing theta")]
+    NoValueFound,
 }
 
-impl Into<CtsimErr> for TTEComputeError {
+impl Into<CtsimErr> for ThetaComputeError {
     fn into(self) -> CtsimErr {
-        CtsimErr::TTECompute(self)
+        CtsimErr::ThetaCompute(self)
     }
 }
 
-// pub fn tte_compute(n_per_arm: Option<usize>) {
-//     match surv_sim_settings.target {
-//         ComputationTarget::SampleSize => tte_compute_sample_size(surv_sim_settings),
-//         ComputationTarget::Alpha => tte_compute_alpha(surv_sim_settings),
-//         ComputationTarget::Beta => tte_compute_beta(surv_sim_settings),
-//         ComputationTarget::EffectSize => tte_compute_effect_size(surv_sim_settings),
-//     }
-// }
-
-pub fn tte_compute_sample_size(
+pub fn compute_information(
     alpha: f64,
     target_power: f64,
-    hr: f64,
+    delta: f64,
     maybe_lower_spending_fcn_type: Option<SpendingFcn>,
     maybe_upper_spending_fcn_type: Option<SpendingFcn>,
-    look_fractions: &Vec<f64>,
+    maybe_look_fractions: Option<&Vec<f64>>,
     tol: f64,
-) -> Result<usize, CtsimErr> {
-    let log_hr = hr.ln();
+) -> Result<f64, CtsimErr> {
     // TODO: handle 1-look case separately
+    if maybe_look_fractions.is_none() {
+        let z_alpha = std_normal_quantile(1.0 - alpha)?;
+        let z_beta = std_normal_quantile(target_power)?;
+        let theta = z_alpha + z_beta;
+        //    theta = delta * \sqrt(I(1))
+        // => (theta / delta)^2 = I(1)
+        #[allow(non_snake_case)]
+        let target_I = (theta / delta).powf(2.0);
+        return Ok(target_I);
+    }
+
+    let look_fractions = maybe_look_fractions.unwrap();
     let alpha_spend = compute_spending_vec(
         look_fractions,
         alpha,
@@ -50,10 +52,14 @@ pub fn tte_compute_sample_size(
     )?;
     let bounds = find_bounds(&alpha_spend, look_fractions, 32, tol)?;
 
+    #[allow(non_snake_case)]
     let mut lower_I: f64 = 1.0;
+    #[allow(non_snake_case)]
     let mut upper_I: f64 = 1000.0;
+    #[allow(non_snake_case)]
     let mut cur_I: f64 = (lower_I + upper_I) / 2.0;
-    let mut theta = log_hr * cur_I.sqrt();
+
+    let mut theta = delta * cur_I.sqrt();
     let mut cur_power_lower: f64 = psi_k(&bounds, look_fractions, theta, IntegralType::Lower, 32)
         .iter()
         .sum();
@@ -73,7 +79,7 @@ pub fn tte_compute_sample_size(
             lower_I = cur_I;
         }
         cur_I = (lower_I + upper_I) / 2.0;
-        theta = log_hr * cur_I.sqrt();
+        theta = delta * cur_I.sqrt();
         cur_power_lower = psi_k(&bounds, look_fractions, theta, IntegralType::Lower, 32)
             .iter()
             .sum();
@@ -88,15 +94,16 @@ pub fn tte_compute_sample_size(
     }
 
     if (cur_power - target_power).abs() > tol {
-        return Err(TTEComputeError::FailedToConverge(ComputationTarget::SampleSize).into());
+        return Err(ThetaComputeError::FailedToConverge.into());
     }
 
+    #[allow(non_snake_case)]
     let minimal_I = match sufficient_total_informations.into_iter().reduce(f64::min) {
         Some(i) => i,
-        None => Err(TTEComputeError::NoValueFound(ComputationTarget::SampleSize).into())?,
+        None => Err(ThetaComputeError::NoValueFound.into())?,
     };
 
-    Ok((minimal_I * 4.0).ceil() as usize)
+    Ok(minimal_I)
 }
 
 #[cfg(test)]
@@ -105,15 +112,31 @@ mod tests {
 
     #[test]
     fn tte_ss_compute() {
-        let computed_ss = tte_compute_sample_size(
+        let computed_information = compute_information(
             0.025,
             0.9,
-            0.5,
+            0.5_f64.ln(),
             Some(SpendingFcn::LDOF),
-            Some(SpendingFcn::LDOF),
-            &vec![0.7, 1.0],
+            None, // Some(SpendingFcn::LDOF),
+            Some(&vec![0.7, 1.0]),
             0.0001,
-        );
-        assert_eq!(computed_ss.unwrap(), 89);
+        )
+        .unwrap();
+        assert_eq!((computed_information * 4.0).ceil(), 89.0);
+    }
+
+    #[test]
+    fn single_look_info() {
+        let computed_information = compute_information(
+            0.025,
+            0.9,
+            0.5_f64.ln(),
+            Some(SpendingFcn::LDOF),
+            None, // Some(SpendingFcn::LDOF),
+            None,
+            0.0001,
+        )
+        .unwrap();
+        assert_eq!((computed_information * 4.0).ceil(), 88.0);
     }
 }

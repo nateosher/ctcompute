@@ -93,7 +93,7 @@ pub fn compute_spending_vec(
         (Some(lower), Some(upper)) => Ok(AlphaSpendingValues::TwoSided((lower, upper))),
         (None, Some(upper)) => Ok(AlphaSpendingValues::OneSidedUpper(upper)),
 
-        (Some(lower), None) => Ok(AlphaSpendingValues::OneSidedUpper(lower)),
+        (Some(lower), None) => Ok(AlphaSpendingValues::OneSidedLower(lower)),
         _ => unreachable!(),
     }
 }

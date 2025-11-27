@@ -7,7 +7,7 @@ mod integrate;
 mod quadrature;
 mod spending_fcns;
 mod std_normal;
-mod tte_compute;
+mod theta_compute;
 mod tte_sim;
 
 use crate::{
