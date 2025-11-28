@@ -1,8 +1,9 @@
 use crate::error::CtsimErr;
 use crate::integration::{
+    error::TrialBoundsError,
     quadrature::Quadrature,
     std_normal::{std_normal_cdf, std_normal_pdf, std_normal_quantile},
-    types::{IntegralType, TrialBoundsError},
+    types::IntegralType,
 };
 use crate::spending::types::AlphaSpendingValues;
 

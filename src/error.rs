@@ -1,6 +1,9 @@
-use crate::computation::types::ThetaComputeError;
-use crate::integration::types::{NormalDistErr, TrialBoundsError};
-use crate::spending::types::SpendingFcnErr;
+//----------------------------------------
+// Crate error type
+//----------------------------------------
+use crate::computation::error::*;
+use crate::integration::error::*;
+use crate::spending::error::*;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

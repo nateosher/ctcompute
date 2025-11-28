@@ -1,5 +1,8 @@
 use crate::error::CtsimErr;
-use crate::spending::types::{AlphaSpendingValues, SpendingFcn, SpendingFcnErr};
+use crate::spending::{
+    error::SpendingFcnErr,
+    types::{AlphaSpendingValues, SpendingFcn},
+};
 use probability_rs::{Continuous, Distribution, dist::normal::Normal};
 
 // Returns cumulative alpha spent at each look

@@ -1,5 +1,5 @@
 use crate::error::CtsimErr;
-use crate::integration::types::NormalDistErr;
+use crate::integration::error::NormalDistErr;
 use probability_rs::{Distribution, dist::normal::Normal};
 
 pub fn std_normal_pdf(z: f64) -> f64 {

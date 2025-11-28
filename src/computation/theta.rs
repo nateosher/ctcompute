@@ -1,6 +1,6 @@
 use std::f64;
 
-use crate::computation::types::ThetaComputeError;
+use crate::computation::error::ThetaComputeError;
 use crate::error::CtsimErr;
 use crate::integration::{
     integrate::{find_bounds, psi_k},
