@@ -5,15 +5,15 @@ use crate::error::CtsimErr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum ThetaComputeError {
-    #[error("failed to converge while computing theta")]
+pub enum InformationComputeError {
+    #[error("failed to converge while computing total information")]
     FailedToConverge,
-    #[error("no valid value found while computing theta")]
+    #[error("no valid value found while computing total information")]
     NoValueFound,
 }
 
-impl Into<CtsimErr> for ThetaComputeError {
+impl Into<CtsimErr> for InformationComputeError {
     fn into(self) -> CtsimErr {
-        CtsimErr::ThetaCompute(self)
+        CtsimErr::InformationCompute(self)
     }
 }

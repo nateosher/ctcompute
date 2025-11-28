@@ -15,5 +15,5 @@ pub enum CtsimErr {
     #[error("while computing trial bounds: {0}")]
     TrialBounds(TrialBoundsError),
     #[error("while computing TTE characteristic: {0}")]
-    ThetaCompute(ThetaComputeError),
+    InformationCompute(InformationComputeError),
 }

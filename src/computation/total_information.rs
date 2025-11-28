@@ -1,6 +1,6 @@
 use std::f64;
 
-use crate::computation::error::ThetaComputeError;
+use crate::computation::error::InformationComputeError;
 use crate::error::CtsimErr;
 use crate::integration::{
     integrate::{find_bounds, psi_k},
@@ -81,13 +81,13 @@ pub fn compute_information(
     }
 
     if (cur_power - target_power).abs() > tol {
-        return Err(ThetaComputeError::FailedToConverge.into());
+        return Err(InformationComputeError::FailedToConverge.into());
     }
 
     #[allow(non_snake_case)]
     let minimal_I = match sufficient_total_informations.into_iter().reduce(f64::min) {
         Some(i) => i,
-        None => Err(ThetaComputeError::NoValueFound.into())?,
+        None => Err(InformationComputeError::NoValueFound.into())?,
     };
 
     Ok(minimal_I)

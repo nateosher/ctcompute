@@ -3,5 +3,5 @@
 //----------------------------------------
 pub mod enrollment_sim;
 pub mod error;
-pub mod theta;
+pub mod total_information;
 pub mod types;
