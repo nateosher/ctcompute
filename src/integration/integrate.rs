@@ -1,12 +1,10 @@
-use crate::std_normal::{std_normal_cdf, std_normal_pdf, std_normal_quantile};
-use crate::{ctsim_err::CtsimErr, quadrature::Quadrature, spending_fcns::AlphaSpendingValues};
-use thiserror::Error;
-
-#[derive(PartialEq, Clone, Copy)]
-pub enum IntegralType {
-    Upper,
-    Lower,
-}
+use crate::error::CtsimErr;
+use crate::integration::{
+    quadrature::Quadrature,
+    std_normal::{std_normal_cdf, std_normal_pdf, std_normal_quantile},
+    types::{IntegralType, TrialBoundsError},
+};
+use crate::spending::types::AlphaSpendingValues;
 
 // J&T p. 354
 #[allow(non_snake_case)]
@@ -132,18 +130,6 @@ pub fn psi_k(
     res
 }
 
-#[derive(Error, Debug)]
-pub enum TrialBoundsError {
-    #[error("failed to converge (computed alpha: {0}, target alpha: {1}, tolerance: {2}")]
-    FailedToConverge(f64, f64, f64),
-}
-
-impl Into<CtsimErr> for TrialBoundsError {
-    fn into(self) -> CtsimErr {
-        CtsimErr::TrialBounds(self)
-    }
-}
-
 // Information fractions, alpha spend, and quadrature
 // size (r), finds bounds that satisfy constraints
 // tol is tolerance, i.e. how close to true alpha should
@@ -267,7 +253,7 @@ pub fn find_bounds(
 
 #[cfg(test)]
 mod tests {
-    use crate::spending_fcns::{SpendingFcn, compute_spending_vec};
+    use crate::spending::{spending_fcns::compute_spending_vec, types::SpendingFcn};
 
     use super::*;
 

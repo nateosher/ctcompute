@@ -1,14 +1,10 @@
+use crate::computation::types::EnrollmentSimResult;
 use rand::{
     SeedableRng,
     distributions::{Distribution, WeightedIndex},
     rngs,
 };
 use statrs::distribution::Uniform;
-
-pub struct EnrollmentSimResult {
-    pub enrollment_times: Vec<f64>,
-    pub expected_time: f64,
-}
 
 pub fn sim_enrollment_times(
     n: usize,

@@ -1,18 +1,6 @@
-use crate::ctsim_err::CtsimErr;
+use crate::error::CtsimErr;
+use crate::integration::types::NormalDistErr;
 use probability_rs::{Distribution, dist::normal::Normal};
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum NormalDistErr {
-    #[error("arguments to quantile function should be in [0, 1]; got {0}")]
-    QuantileOutOfBounds(f64),
-}
-
-impl Into<CtsimErr> for NormalDistErr {
-    fn into(self) -> CtsimErr {
-        CtsimErr::NormalDist(self)
-    }
-}
 
 pub fn std_normal_pdf(z: f64) -> f64 {
     (-z * z / 2.0).exp() / (2.0 * std::f64::consts::PI).sqrt()
@@ -90,8 +78,6 @@ pub fn std_normal_quantile(p: f64) -> Result<f64, CtsimErr> {
 
 #[cfg(test)]
 mod tests {
-    use crate::spending_fcns::{SpendingFcn, compute_spending_vec};
-
     use super::*;
 
     #[test]

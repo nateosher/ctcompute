@@ -1,26 +1,13 @@
 use std::f64;
 
-use crate::{
-    ctsim_err::CtsimErr,
-    integrate::{IntegralType, find_bounds, psi_k},
-    spending_fcns::{SpendingFcn, compute_spending_vec},
-    std_normal::{std_normal_cdf, std_normal_quantile},
+use crate::computation::types::ThetaComputeError;
+use crate::error::CtsimErr;
+use crate::integration::{
+    integrate::{find_bounds, psi_k},
+    std_normal::std_normal_quantile,
+    types::IntegralType,
 };
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum ThetaComputeError {
-    #[error("failed to converge while computing theta")]
-    FailedToConverge,
-    #[error("no valid value found while computing theta")]
-    NoValueFound,
-}
-
-impl Into<CtsimErr> for ThetaComputeError {
-    fn into(self) -> CtsimErr {
-        CtsimErr::ThetaCompute(self)
-    }
-}
+use crate::spending::{spending_fcns::compute_spending_vec, types::SpendingFcn};
 
 pub fn compute_information(
     alpha: f64,
