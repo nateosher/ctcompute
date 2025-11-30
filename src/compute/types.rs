@@ -10,5 +10,4 @@
 //     EffectSize,
 // }
 
-pub use crate::enrollment::types::EnrollmentSimResult;
 pub use crate::spending::types::AlphaSpendingValues;

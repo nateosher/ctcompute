@@ -1,3 +1,4 @@
+use crate::enrollment::error::EnrollmentComputationError;
 //----------------------------------------
 // Crate error type
 //----------------------------------------
@@ -16,4 +17,6 @@ pub enum CtcomputeErr {
     TrialBounds(TrialBoundsError),
     #[error("while computing TTE characteristic: {0}")]
     InformationCompute(InformationComputeError),
+    #[error("while computing enrollment: {0}")]
+    EnrollmentCompute(EnrollmentComputationError),
 }

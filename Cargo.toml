@@ -7,6 +7,6 @@ edition = "2024"
 integrate = "0.1.11"
 itertools = "0.14.0"
 probability-rs = "0.1.2"
-rand = "0.8"
+rand = "0.8" # TODO: update to 0.9.2
 statrs = { version = "0.18.0", features = ["rand"] }
 thiserror = "2.0.17"
