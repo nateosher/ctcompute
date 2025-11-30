@@ -1,4 +1,4 @@
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use crate::integration::{
     error::TrialBoundsError,
     quadrature::Quadrature,
@@ -143,7 +143,7 @@ pub fn find_bounds(
     look_fractions: &Vec<f64>,
     r: usize,
     tol: f64,
-) -> Result<Vec<(f64, f64)>, CtsimErr> {
+) -> Result<Vec<(f64, f64)>, CtcomputeErr> {
     let mut bounds: Vec<(f64, f64)> =
         vec![(f64::NEG_INFINITY, f64::INFINITY); look_fractions.len()];
 

@@ -1,4 +1,4 @@
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use crate::integration::error::NormalDistErr;
 use probability_rs::{Distribution, dist::normal::Normal};
 
@@ -68,7 +68,7 @@ pub fn std_normal_quantile_helper(p: f64) -> f64 {
     (((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q
         / (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1.0)
 }
-pub fn std_normal_quantile(p: f64) -> Result<f64, CtsimErr> {
+pub fn std_normal_quantile(p: f64) -> Result<f64, CtcomputeErr> {
     if p < 0.0 || p > 1.0 {
         return Err(NormalDistErr::QuantileOutOfBounds(p).into());
     }

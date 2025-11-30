@@ -1,4 +1,4 @@
-use crate::computation::types::EnrollmentSimResult;
+use crate::enrollment::types::EnrollmentSimResult;
 use rand::{
     SeedableRng,
     distributions::{Distribution, WeightedIndex},

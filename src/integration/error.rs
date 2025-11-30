@@ -1,7 +1,7 @@
 //----------------------------------------
 // integration errors
 //----------------------------------------
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,9 +10,9 @@ pub enum TrialBoundsError {
     FailedToConverge(f64, f64, f64),
 }
 
-impl Into<CtsimErr> for TrialBoundsError {
-    fn into(self) -> CtsimErr {
-        CtsimErr::TrialBounds(self)
+impl Into<CtcomputeErr> for TrialBoundsError {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::TrialBounds(self)
     }
 }
 
@@ -22,8 +22,8 @@ pub enum NormalDistErr {
     QuantileOutOfBounds(f64),
 }
 
-impl Into<CtsimErr> for NormalDistErr {
-    fn into(self) -> CtsimErr {
-        CtsimErr::NormalDist(self)
+impl Into<CtcomputeErr> for NormalDistErr {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::NormalDist(self)
     }
 }

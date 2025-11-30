@@ -1,7 +1,4 @@
-//----------------------------------------
-// computation errors
-//----------------------------------------
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -12,8 +9,8 @@ pub enum InformationComputeError {
     NoValueFound,
 }
 
-impl Into<CtsimErr> for InformationComputeError {
-    fn into(self) -> CtsimErr {
-        CtsimErr::InformationCompute(self)
+impl Into<CtcomputeErr> for InformationComputeError {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::InformationCompute(self)
     }
 }

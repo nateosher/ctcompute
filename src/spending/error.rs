@@ -1,7 +1,7 @@
 //----------------------------------------
 // spending errors
 //----------------------------------------
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -18,8 +18,8 @@ pub enum SpendingFcnErr {
     NoSpendingFunctionSpecified,
 }
 
-impl Into<CtsimErr> for SpendingFcnErr {
-    fn into(self) -> CtsimErr {
-        CtsimErr::SpendingFcn(self)
+impl Into<CtcomputeErr> for SpendingFcnErr {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::SpendingFcn(self)
     }
 }

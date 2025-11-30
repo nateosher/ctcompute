@@ -1,4 +1,4 @@
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use crate::spending::{
     error::SpendingFcnErr,
     types::{AlphaSpendingValues, SpendingFcn},
@@ -13,7 +13,7 @@ pub fn compute_spending_vec(
     alpha: f64,
     maybe_lower_spending_fcn_type: Option<SpendingFcn>,
     maybe_upper_spending_fcn_type: Option<SpendingFcn>,
-) -> Result<AlphaSpendingValues, CtsimErr> {
+) -> Result<AlphaSpendingValues, CtcomputeErr> {
     //----------------------------------------
     // Check arguments
     if look_fractions.is_empty() {
@@ -42,7 +42,7 @@ pub fn compute_spending_vec(
         Some(spending_fcn) => look_fractions
             .iter()
             .map(|&t| spending_fcn(t, alpha))
-            .collect::<Result<Vec<f64>, CtsimErr>>()
+            .collect::<Result<Vec<f64>, CtcomputeErr>>()
             .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
         None => None,
     };
@@ -56,7 +56,7 @@ pub fn compute_spending_vec(
         Some(spending_fcn) => look_fractions
             .iter()
             .map(|&t| spending_fcn(t, alpha))
-            .collect::<Result<Vec<f64>, CtsimErr>>()
+            .collect::<Result<Vec<f64>, CtcomputeErr>>()
             .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
         None => None,
     };
@@ -70,7 +70,7 @@ pub fn compute_spending_vec(
     }
 }
 
-fn lan_demets_obrien_fleming(t: f64, alpha: f64) -> Result<f64, CtsimErr> {
+fn lan_demets_obrien_fleming(t: f64, alpha: f64) -> Result<f64, CtcomputeErr> {
     if t < 0.0 || t > 1.0 {
         Err(SpendingFcnErr::OutOfBounds(t).into())
     } else {

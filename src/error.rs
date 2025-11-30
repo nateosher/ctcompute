@@ -1,13 +1,13 @@
 //----------------------------------------
 // Crate error type
 //----------------------------------------
-use crate::computation::error::*;
-use crate::integration::error::*;
-use crate::spending::error::*;
+pub use crate::integration::error::*;
+pub use crate::sample_size::error::*;
+pub use crate::spending::error::*;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum CtsimErr {
+pub enum CtcomputeErr {
     #[error("while evaluating spending function: {0}")]
     SpendingFcn(SpendingFcnErr),
     #[error("while evaluating normal distribution: {0}")]

@@ -1,12 +1,12 @@
 use std::f64;
 
-use crate::computation::error::InformationComputeError;
-use crate::error::CtsimErr;
+use crate::error::CtcomputeErr;
 use crate::integration::{
     integrate::{find_bounds, psi_k},
     std_normal::std_normal_quantile,
     types::IntegralType,
 };
+use crate::sample_size::error::InformationComputeError;
 use crate::spending::{spending_fcns::compute_spending_vec, types::SpendingFcn};
 
 pub fn compute_information(
@@ -17,7 +17,7 @@ pub fn compute_information(
     maybe_upper_spending_fcn_type: Option<SpendingFcn>,
     maybe_look_fractions: Option<&Vec<f64>>,
     tol: f64,
-) -> Result<f64, CtsimErr> {
+) -> Result<f64, CtcomputeErr> {
     // TODO: handle 1-look case separately
     if maybe_look_fractions.is_none() {
         let z_alpha = std_normal_quantile(1.0 - alpha)?;
