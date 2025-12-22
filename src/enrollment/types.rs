@@ -3,7 +3,7 @@ use std::f64;
 use crate::enrollment::error::EnrollmentComputationError;
 use crate::error::CtcomputeErr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum EnrollmentRate {
     PiecewiseConstant {
         enrollment_durations: Vec<f64>,

@@ -27,3 +27,15 @@ impl Into<CtcomputeErr> for NormalDistErr {
         CtcomputeErr::NormalDist(self)
     }
 }
+
+#[derive(Error, Debug)]
+pub enum RootFindErr {
+    #[error("f(lower_bound) is larger than target; use smaller lower bound")]
+    BadLowerBound,
+}
+
+impl Into<CtcomputeErr> for RootFindErr {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::RootFind(self)
+    }
+}

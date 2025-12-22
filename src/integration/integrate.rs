@@ -135,8 +135,6 @@ pub fn psi_k(
 // size (r), finds bounds that satisfy constraints
 // tol is tolerance, i.e. how close to true alpha should
 // we shoot for
-// TODO: update alpha to be split into sides, i.e. allow
-// for unequal allocation
 #[allow(non_snake_case)]
 pub fn find_bounds(
     alpha: &AlphaSpendingValues,

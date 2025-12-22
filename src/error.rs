@@ -19,4 +19,8 @@ pub enum CtcomputeErr {
     InformationCompute(InformationComputeError),
     #[error("while computing enrollment: {0}")]
     EnrollmentCompute(EnrollmentComputationError),
+    #[error("while computing sample size: {0}")]
+    SampleSizeCompute(SampleSizeComputeError),
+    #[error("while performing root find: {0}")]
+    RootFind(RootFindErr),
 }

@@ -18,7 +18,6 @@ pub fn compute_information(
     maybe_look_fractions: Option<&Vec<f64>>,
     tol: f64,
 ) -> Result<f64, CtcomputeErr> {
-    // TODO: handle 1-look case separately
     if maybe_look_fractions.is_none() {
         let z_alpha = std_normal_quantile(1.0 - alpha)?;
         let z_beta = std_normal_quantile(target_power)?;

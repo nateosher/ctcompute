@@ -1,5 +1,7 @@
 use crate::error::{CtcomputeErr, RootFindErr};
 
+// TODO: add failsafes to while loops
+
 /// Given a monotonically increasing function f(x) and lower bound, finds
 /// value x' to the right of the lower bound such that f(x') = target
 pub fn root_find_monotonic<F>(
@@ -25,7 +27,7 @@ where
     // Perform search
     let mut x = (lower_bound + upper_bound) / 2.;
     let mut y = f(x);
-    while (lower_bound - upper_bound).abs() > tol && (y - target).abs() > tol {
+    while (lower_bound - upper_bound).abs() > tol / 2. && (y - target).abs() > tol {
         if y <= target {
             lower_bound = x;
         } else {
@@ -52,7 +54,7 @@ mod tests {
 
     #[test]
     fn basic_quadratic_root_find() {
-        let f = |x| x;
+        let f = |x| x * x;
         let res =
             root_find_monotonic(f, 0.0, 9., 0.001).expect("failed to perform quadratic root find");
         assert!((res - 3.0).abs() < 0.001);

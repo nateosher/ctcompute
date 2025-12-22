@@ -14,3 +14,12 @@ impl Into<CtcomputeErr> for InformationComputeError {
         CtcomputeErr::InformationCompute(self)
     }
 }
+
+#[derive(Error, Debug)]
+pub enum SampleSizeComputeError {}
+
+impl Into<CtcomputeErr> for SampleSizeComputeError {
+    fn into(self) -> CtcomputeErr {
+        CtcomputeErr::SampleSizeCompute(self)
+    }
+}
