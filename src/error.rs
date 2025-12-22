@@ -1,8 +1,8 @@
-use crate::enrollment::error::EnrollmentComputationError;
+use crate::duration::error::EnrollmentComputationError;
 //----------------------------------------
 // Crate error type
 //----------------------------------------
-pub use crate::integration::error::*;
+pub use crate::information::error::*;
 pub use crate::sample_size::error::*;
 pub use crate::spending::error::*;
 use thiserror::Error;

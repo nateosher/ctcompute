@@ -1,4 +1,4 @@
-use crate::enrollment::types::EnrollmentRate;
+use crate::duration::types::EnrollmentRate;
 use crate::error::CtcomputeErr;
 
 /// Given enrollment duration and EnrollmentRate object, computes expected

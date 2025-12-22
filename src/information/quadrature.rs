@@ -100,7 +100,7 @@ mod tests {
     use std::f64;
 
     use super::*;
-    use crate::integration::std_normal::std_normal_pdf;
+    use crate::information::std_normal::std_normal_pdf;
 
     #[test]
     fn basic_quadrature_indefinite() {

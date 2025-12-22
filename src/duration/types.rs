@@ -1,6 +1,6 @@
 use std::f64;
 
-use crate::enrollment::error::EnrollmentComputationError;
+use crate::duration::error::EnrollmentComputationError;
 use crate::error::CtcomputeErr;
 
 #[derive(Debug, Clone)]

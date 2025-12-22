@@ -1,4 +1,4 @@
-use crate::enrollment::types::EnrollmentRate;
+use crate::duration::types::EnrollmentRate;
 
 pub fn expected_events_piecewise_arms(
     prop_treated: f64,

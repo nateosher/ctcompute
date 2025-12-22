@@ -1,11 +1,11 @@
 use std::f64;
 
-use crate::enrollment::{expected_enrollment::expected_enrollment, types::EnrollmentRate};
+use crate::duration::min_followup::min_followup;
+use crate::duration::{expected_enrollment::expected_enrollment, types::EnrollmentRate};
 use crate::error::CtcomputeErr;
-use crate::integration::root_find::root_find_monotonic;
-use crate::sample_size::expected_events::expected_events_piecewise_arms;
-use crate::sample_size::min_followup::min_followup;
+use crate::events::expected_events::expected_events_piecewise_arms;
 use crate::sample_size::types::SampleSizeCalculation;
+use crate::util::root_find::root_find_monotonic;
 
 /// Computes sample size given total necessary information
 /// and probability of randomization to treatment
@@ -110,13 +110,13 @@ pub fn compute_ss_range(
     // Compute final enrollment + return
     //----------------------------------------
 
-    // TODO: switch back to previous minimum accrual definition (the one below)
     let min_accrual_dur = accrual_times[0];
     let max_accrual_dur = accrual_times[accrual_times.len() - 1];
     let min_sample_size = expected_enrollment(min_accrual_dur, &enrollment_rate).unwrap();
     let max_sample_size = expected_enrollment(max_accrual_dur, &enrollment_rate).unwrap();
     let min_followup_dur = followup_times[followup_times.len() - 1];
     let max_followup_dur = min_followup_by_accrual(min_accrual_dur)?;
+
     Ok(SampleSizeCalculation {
         min_accrual_dur,
         max_accrual_dur,

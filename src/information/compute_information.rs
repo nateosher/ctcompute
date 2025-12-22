@@ -1,14 +1,16 @@
 use std::f64;
 
 use crate::error::CtcomputeErr;
-use crate::integration::{
-    integrate::{find_bounds, psi_k},
+use crate::information::{
+    integrate::{exit_probability, find_bounds},
     std_normal::std_normal_quantile,
     types::IntegralType,
 };
 use crate::sample_size::error::InformationComputeError;
 use crate::spending::{spending_fcns::compute_spending_vec, types::SpendingFcn};
 
+// TODO: specify hypothesis type, i.e. whether upper or lower exit or both count
+// as success
 pub fn compute_information(
     alpha: f64,
     target_power: f64,
@@ -40,18 +42,21 @@ pub fn compute_information(
 
     #[allow(non_snake_case)]
     let mut lower_I: f64 = 1.0;
+    // TODO: set upper information bound dynamically
     #[allow(non_snake_case)]
-    let mut upper_I: f64 = 1000.0;
+    let mut upper_I: f64 = 1_000.0;
     #[allow(non_snake_case)]
     let mut cur_I: f64 = (lower_I + upper_I) / 2.0;
 
     let mut theta = delta * cur_I.sqrt();
-    let mut cur_power_lower: f64 = psi_k(&bounds, look_fractions, theta, IntegralType::Lower, 32)
-        .iter()
-        .sum();
-    let mut cur_power_upper: f64 = psi_k(&bounds, look_fractions, theta, IntegralType::Upper, 32)
-        .iter()
-        .sum();
+    let mut cur_power_lower: f64 =
+        exit_probability(&bounds, look_fractions, theta, IntegralType::Lower, 32)
+            .iter()
+            .sum();
+    let mut cur_power_upper: f64 =
+        exit_probability(&bounds, look_fractions, theta, IntegralType::Upper, 32)
+            .iter()
+            .sum();
     let mut cur_power = cur_power_lower + cur_power_upper;
     let mut sufficient_total_informations: Vec<f64> = vec![];
     if cur_power > target_power {
@@ -66,10 +71,10 @@ pub fn compute_information(
         }
         cur_I = (lower_I + upper_I) / 2.0;
         theta = delta * cur_I.sqrt();
-        cur_power_lower = psi_k(&bounds, look_fractions, theta, IntegralType::Lower, 32)
+        cur_power_lower = exit_probability(&bounds, look_fractions, theta, IntegralType::Lower, 32)
             .iter()
             .sum();
-        cur_power_upper = psi_k(&bounds, look_fractions, theta, IntegralType::Upper, 32)
+        cur_power_upper = exit_probability(&bounds, look_fractions, theta, IntegralType::Upper, 32)
             .iter()
             .sum();
         cur_power = cur_power_lower + cur_power_upper;

@@ -1,5 +1,5 @@
 use crate::error::CtcomputeErr;
-use crate::integration::{
+use crate::information::{
     error::TrialBoundsError,
     quadrature::Quadrature,
     std_normal::{std_normal_cdf, std_normal_pdf, std_normal_quantile},
@@ -41,7 +41,7 @@ pub fn lower_exit_prob(z_k_1: f64, I_k_1: f64, a_k: f64, I_k: f64, theta: f64) -
 // Computes exit probabilities given bounds, information fractions,
 // theta, and integral type (upper or lower). r controls quadrature size.
 #[allow(non_snake_case)]
-pub fn psi_k(
+pub fn exit_probability(
     bounds: &[(f64, f64)],
     look_fractions: &[f64],
     theta: f64,
@@ -196,7 +196,7 @@ pub fn find_bounds(
                 IntegralType::Upper => bounds[i].1 = mid,
             };
 
-            let mut cur_alpha: f64 = psi_k(
+            let mut cur_alpha: f64 = exit_probability(
                 &bounds[0..=i],
                 &look_fractions[0..=i],
                 0.0,
@@ -228,7 +228,7 @@ pub fn find_bounds(
                 };
 
                 // compute new alpha
-                cur_alpha = psi_k(
+                cur_alpha = exit_probability(
                     &bounds[0..=i],
                     &look_fractions[0..=i],
                     0.0,
@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn pocock_2() {
-        let alpha: f64 = psi_k(
+        let alpha: f64 = exit_probability(
             &vec![(-2.17878788, 2.17878788), (-2.17878788, 2.17878788)],
             &vec![0.5, 1.0],
             0.0,
@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn pocock_3() {
-        let alpha: f64 = psi_k(
+        let alpha: f64 = exit_probability(
             &vec![(-2.289, 2.289), (-2.289, 2.289), (-2.289, 2.289)],
             &vec![1.0 / 3.0, 2.0 / 3.0, 1.0],
             0.0,
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn alpha_ld_of_1() {
-        let alpha: f64 = psi_k(
+        let alpha: f64 = exit_probability(
             &vec![(-2.437995, 2.437995), (-1.999873, 1.999873)],
             &vec![0.7, 1.0],
             0.0,
@@ -300,7 +300,7 @@ mod tests {
     }
     #[test]
     fn alpha_ld_of_2() {
-        let alpha: f64 = psi_k(
+        let alpha: f64 = exit_probability(
             &vec![(-3.356869, 3.356869), (-1.962261, 1.962261)],
             &vec![0.4, 1.0],
             0.0,

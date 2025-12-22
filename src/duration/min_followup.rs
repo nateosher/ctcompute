@@ -1,10 +1,9 @@
 use std::f64;
 
+use crate::duration::types::EnrollmentRate;
 use crate::error::CtcomputeErr;
-use crate::integration::root_find::root_find_monotonic;
-use crate::{
-    enrollment::types::EnrollmentRate, sample_size::expected_events::expected_events_piecewise_arms,
-};
+use crate::events::expected_events::expected_events_piecewise_arms;
+use crate::util::root_find::root_find_monotonic;
 
 /// Given everything except followup time, computes minimum followup time required
 /// to observe a given number of events
