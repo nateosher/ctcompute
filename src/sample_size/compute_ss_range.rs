@@ -4,10 +4,12 @@ use crate::duration::min_followup::min_followup;
 use crate::duration::{expected_enrollment::expected_enrollment, types::EnrollmentRate};
 use crate::error::CtcomputeErr;
 use crate::events::expected_events::expected_events_piecewise_arms;
+use crate::information::compute_information::compute_information;
+use crate::spending::types::SpendingFcn;
 use crate::util::root_find::root_find_monotonic;
 
-/// Computes sample size given total necessary information
-/// and probability of randomization to treatment
+/// Computes sample size range given alpha, power, spending function,
+/// look fractions, and probability of randomization to treatment
 /// For now assumes TTE endpoint
 /// Assumes fixed enrollment rates, where last rate is extended as long as necessary
 /// Given this, computes range of possible accrual durations (and thus sample sizes and
@@ -19,9 +21,12 @@ use crate::util::root_find::root_find_monotonic;
 /// results in a percent change in total necessary followup time of 1% or less,
 /// we consider the corresponding accrual time to be the largest one worth
 /// considering.
-#[allow(non_snake_case)]
 pub fn compute_ss_range(
-    I: f64,
+    alpha: f64,
+    power: f64,
+    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+    maybe_look_fractions: Option<&Vec<f64>>,
     prop_treated: f64,
     lambda_event_trt: f64,
     lambda_event_ctrl: f64,
@@ -31,6 +36,20 @@ pub fn compute_ss_range(
     delta: f64,
     perc_change_stop: f64,
 ) -> Result<(usize, usize), CtcomputeErr> {
+    //----------------------------------------
+    // Amount of required information
+    //----------------------------------------
+    #[allow(non_snake_case)]
+    let I = compute_information(
+        alpha,
+        power,
+        (lambda_event_trt / lambda_event_ctrl).ln(),
+        maybe_lower_spending_fcn_type,
+        maybe_upper_spending_fcn_type,
+        maybe_look_fractions,
+        tol,
+    )?;
+
     //----------------------------------------
     // # of events needed to achieve desired information fraction
     //----------------------------------------
@@ -109,14 +128,13 @@ pub fn compute_ss_range(
     // Compute final enrollment + return
     //----------------------------------------
 
-    let min_accrual_dur = accrual_times[0];
     let max_accrual_dur = accrual_times[accrual_times.len() - 1];
     let min_sample_size = expected_enrollment(min_accrual_dur, &enrollment_rate)
         .unwrap()
-        .ceil();
+        .round();
     let max_sample_size = expected_enrollment(max_accrual_dur, &enrollment_rate)
         .unwrap()
-        .ceil();
+        .round();
 
     Ok((min_sample_size as usize, max_sample_size as usize))
 }
@@ -128,31 +146,43 @@ mod tests {
 
     #[test]
     fn ss_range_comparison() {
-        let enrollment_rate = EnrollmentRate::new(vec![0., 1., 2.], vec![10., 20., 30.])
+        let er = EnrollmentRate::new(vec![0., 1., 2.], vec![10., 20., 30.])
             .expect("failed to construct enrollment rate object");
         let range_1 = compute_ss_range(
-            22.,
-            0.5,
-            0.018,
-            0.036,
-            None,
-            &enrollment_rate,
-            0.001, // tol
-            0.1,   // delta
-            0.01,  // min_perc_change
+            0.025,  // alpha
+            0.9,    // power
+            None,   // lower spending function
+            None,   // upper spending function
+            None,   // look fractions
+            0.5,    // prop treated
+            0.018,  // hazard for treated group
+            0.036,  // hazard for control group
+            None,   // hazard of dropout
+            &er,    // enrollment rate
+            0.001,  // tol
+            0.1,    // delta
+            0.0001, // min_perc_change
         )
         .expect("failed to compute first sample size range");
+
+        // Based on the range EAST gives
+        assert_eq!(range_1.0, 88);
+        assert_eq!(range_1.1, 473);
 
         // Larger minimum percent change means we should consider smaller
         // maximum accrual durations; however, minimum accrual durations
         // should be the same
         let range_2 = compute_ss_range(
-            22.,
-            0.5,
-            0.018,
-            0.036,
-            None,
-            &enrollment_rate,
+            0.025, // alpha
+            0.9,   // power
+            None,  // lower spending function
+            None,  // upper spending function
+            None,  // look fractions
+            0.5,   // prop treated
+            0.018, // hazard for treated group
+            0.036, // hazard for control group
+            None,  // hazard of dropout
+            &er,   // enrollment rate
             0.001, // tol
             0.1,   // delta
             0.05,  // min_perc_change
@@ -163,25 +193,61 @@ mod tests {
         assert_eq!(range_1.0, range_2.0);
 
         // However, maximum sample size of second range should be smaller, since
-        // we stop at steeper dropoff (5% vs. 1%)
+        // we stop at steeper dropoff (5% vs. 0.01%)
         assert!(range_1.1 > range_2.1);
     }
 
     #[test]
-    fn ss_range_no_dropout_2() {
-        let enrollment_rate = EnrollmentRate::new(vec![0., 5., 10.], vec![10., 20., 30.])
+    fn ss_range_comparison_2() {
+        let er = EnrollmentRate::new(vec![0., 5., 10.], vec![10., 20., 30.])
             .expect("failed to construct enrollment rate object");
         let range = compute_ss_range(
-            64.,
-            0.5,
-            0.04,
-            0.06,
-            Some(0.00878),
-            &enrollment_rate,
-            0.001,  // tol
-            0.1,    // delta
-            0.0001, // min_perc_change
-        );
-        println!("{range:?}");
+            0.025,                     // alpha
+            0.9,                       // power
+            Some(SpendingFcn::LDOF),   // lower spending function
+            None,                      // upper spending function
+            Some(&vec![0.5, 0.7, 1.]), // look fractions
+            2. / 3.,                   // prop treated
+            0.4,                       // hazard for treated group
+            0.6,                       // hazard for control group
+            Some(0.00878),             // hazard of dropout
+            &er,                       // enrollment rate
+            0.00001,                   // tol
+            0.1,                       // delta
+            0.0001,                    // min_perc_change
+        )
+        .expect("failed to compute first sample size range");
+
+        assert_eq!(range.0, 298);
+        // Again, no set upper bound, but ideally want it to be within
+        // ~ 10 patients or so of EAST
+        assert!((range.1 as i64 - 360_i64).abs() < 10);
+    }
+
+    #[test]
+    fn ss_range_comparison_3() {
+        let er = EnrollmentRate::new(vec![0., 10., 15.], vec![5., 7., 11.])
+            .expect("failed to construct enrollment rate object");
+        let range = compute_ss_range(
+            0.025,                     // alpha
+            0.9,                       // power
+            Some(SpendingFcn::LDOF),   // lower spending function
+            None,                      // upper spending function
+            Some(&vec![0.3, 0.8, 1.]), // look fractions
+            0.5,                       // prop treated
+            0.3,                       // hazard for treated group
+            0.4,                       // hazard for control group
+            Some(0.00878),             // hazard of dropout
+            &er,                       // enrollment rate
+            0.00001,                   // tol
+            0.1,                       // delta
+            0.0001,                    // min_perc_change
+        )
+        .expect("failed to compute first sample size range");
+
+        assert!((range.0 as i64 - 532).abs() <= 1);
+        // Again, no set upper bound, but ideally want it to be within
+        // ~ 10 patients or so of EAST
+        assert!((range.1 as i64 - 561_i64).abs() < 10);
     }
 }

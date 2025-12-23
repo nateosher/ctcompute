@@ -129,4 +129,19 @@ mod tests {
         .unwrap();
         assert_eq!((computed_information * 4.0).ceil(), 88.0);
     }
+
+    #[test]
+    fn three_look_of() {
+        let computed_information = compute_information(
+            0.025,
+            0.9,
+            0.5_f64.ln(),
+            Some(SpendingFcn::LDOF),
+            None,
+            Some(&vec![1. / 3., 2. / 3., 1.]),
+            0.001,
+        )
+        .expect("could not compute required information");
+        assert_eq!((computed_information * 4.).ceil(), 89.);
+    }
 }
