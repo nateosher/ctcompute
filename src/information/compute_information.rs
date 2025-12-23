@@ -30,6 +30,7 @@ pub fn compute_information(
         return Ok(target_I);
     }
 
+    // Unwrap can't fail, since None case is handled above
     let look_fractions = maybe_look_fractions.unwrap();
     let alpha_spend = compute_spending_vec(
         look_fractions,
@@ -43,11 +44,36 @@ pub fn compute_information(
     let mut lower_I: f64 = 1.0;
     // TODO: set upper information bound dynamically
     #[allow(non_snake_case)]
-    let mut upper_I: f64 = 1_000.0;
+    let mut upper_I: f64 = 1_000.;
+    let mut max_theta = delta * upper_I.sqrt();
+    let mut max_power_lower: f64 =
+        exit_probability(&bounds, look_fractions, max_theta, IntegralType::Lower, 32)
+            .iter()
+            .sum();
+    let mut max_power_upper: f64 =
+        exit_probability(&bounds, look_fractions, max_theta, IntegralType::Upper, 32)
+            .iter()
+            .sum();
+    let mut max_power = max_power_lower + max_power_upper;
+
+    while max_power < target_power && (max_power - 1.0).abs() > 0.00000001 {
+        upper_I *= 2.;
+        max_theta = delta * upper_I.sqrt();
+        max_power_lower =
+            exit_probability(&bounds, look_fractions, max_theta, IntegralType::Lower, 32)
+                .iter()
+                .sum();
+        max_power_upper =
+            exit_probability(&bounds, look_fractions, max_theta, IntegralType::Upper, 32)
+                .iter()
+                .sum();
+        max_power = max_power_lower + max_power_upper;
+    }
+
     #[allow(non_snake_case)]
     let mut cur_I: f64 = (lower_I + upper_I) / 2.0;
-
     let mut theta = delta * cur_I.sqrt();
+
     let mut cur_power_lower: f64 =
         exit_probability(&bounds, look_fractions, theta, IntegralType::Lower, 32)
             .iter()

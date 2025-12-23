@@ -9,7 +9,7 @@ pub struct Quadrature {
 // TODO: error handling
 impl Quadrature {
     #[allow(non_snake_case)]
-    pub fn new(theta: f64, I_j: f64, r: usize, a: f64, b: f64) -> Self {
+    pub fn new(theta: f64, I_j: f64, r: usize, a: f64, b: f64) -> Quadrature {
         let theta_sqrt_I_j = theta * I_j.sqrt();
         let r_f = r as f64;
 
@@ -36,7 +36,15 @@ impl Quadrature {
             .map(|&i| i)
             .collect();
 
-        // println!("x: {x:?}");
+        // If there were no points placed between a and b, there is virtually
+        // no mass between (a, b), so just put a single point with weight 1
+        // between a and b
+        if x.is_empty() {
+            return Quadrature {
+                z: vec![(a + b) / 2.],
+                w: vec![1.0],
+            };
+        }
 
         // If lower end was less than a, make first element a
         if x[0] != x_full[0] {

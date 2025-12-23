@@ -1,5 +1,5 @@
 //----------------------------------------
-// integration errors
+// information errors
 //----------------------------------------
 use crate::error::CtcomputeErr;
 use thiserror::Error;
