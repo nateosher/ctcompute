@@ -27,7 +27,7 @@ pub fn expected_events_piecewise_arms(
             )
 }
 
-pub fn expected_events_piecewise(
+fn expected_events_piecewise(
     lambda_event: f64,
     maybe_lambda_dropout: Option<f64>,
     enrollment_rate: &EnrollmentRate,
@@ -63,7 +63,7 @@ pub fn expected_events_piecewise(
 }
 
 /// Probability of observing an event, assuming uniform accrual
-pub fn expected_events_uniform(
+fn expected_events_uniform(
     lambda_event: f64,
     maybe_lambda_dropout: Option<f64>,
     accrual_rate: f64,

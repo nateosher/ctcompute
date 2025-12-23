@@ -2,8 +2,7 @@ use std::f64;
 
 use crate::error::CtcomputeErr;
 use crate::information::{
-    integrate::{exit_probability, find_bounds},
-    std_normal::std_normal_quantile,
+    exit_probability::exit_probability, std_normal::std_normal_quantile, trial_bounds::find_bounds,
     types::IntegralType,
 };
 use crate::sample_size::error::InformationComputeError;

@@ -4,7 +4,6 @@ use crate::duration::min_followup::min_followup;
 use crate::duration::{expected_enrollment::expected_enrollment, types::EnrollmentRate};
 use crate::error::CtcomputeErr;
 use crate::events::expected_events::expected_events_piecewise_arms;
-use crate::sample_size::types::SampleSizeCalculation;
 use crate::util::root_find::root_find_monotonic;
 
 /// Computes sample size given total necessary information
@@ -31,7 +30,7 @@ pub fn compute_ss_range(
     tol: f64,
     delta: f64,
     perc_change_stop: f64,
-) -> Result<SampleSizeCalculation, CtcomputeErr> {
+) -> Result<(usize, usize), CtcomputeErr> {
     //----------------------------------------
     // # of events needed to achieve desired information fraction
     //----------------------------------------
@@ -112,87 +111,20 @@ pub fn compute_ss_range(
 
     let min_accrual_dur = accrual_times[0];
     let max_accrual_dur = accrual_times[accrual_times.len() - 1];
-    let min_sample_size = expected_enrollment(min_accrual_dur, &enrollment_rate).unwrap();
-    let max_sample_size = expected_enrollment(max_accrual_dur, &enrollment_rate).unwrap();
-    let min_followup_dur = followup_times[followup_times.len() - 1];
-    let max_followup_dur = min_followup_by_accrual(min_accrual_dur)?;
+    let min_sample_size = expected_enrollment(min_accrual_dur, &enrollment_rate)
+        .unwrap()
+        .ceil();
+    let max_sample_size = expected_enrollment(max_accrual_dur, &enrollment_rate)
+        .unwrap()
+        .ceil();
 
-    Ok(SampleSizeCalculation {
-        min_accrual_dur,
-        max_accrual_dur,
-        min_followup_dur,
-        max_followup_dur,
-        min_sample_size,
-        max_sample_size,
-    })
+    Ok((min_sample_size as usize, max_sample_size as usize))
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-
-    #[test]
-    fn ss_range_no_dropout_1() {
-        let enrollment_rate = EnrollmentRate::new(vec![0., 1., 2.], vec![10., 20., 30.])
-            .expect("failed to construct enrollment rate object");
-        let range = compute_ss_range(
-            22.,
-            0.5,
-            0.018,
-            0.036,
-            None,
-            &enrollment_rate,
-            0.001,  // tol
-            0.1,    // delta
-            0.0001, // min_perc_change
-        );
-        println!("{range:?}");
-
-        if let Ok(SampleSizeCalculation {
-            min_accrual_dur,
-            max_accrual_dur,
-            min_followup_dur,
-            max_followup_dur,
-            min_sample_size,
-            max_sample_size,
-        }) = range
-        {
-            // Minimum accrual, maximum followup checks
-            let expected_events_min_accrual = expected_events_piecewise_arms(
-                0.5,
-                None,
-                0.018,
-                0.036,
-                &enrollment_rate,
-                min_accrual_dur,
-                max_followup_dur,
-            );
-            assert!((expected_events_min_accrual - 88.).abs() < 0.001);
-            let expected_enrollment_min_accrual =
-                expected_enrollment(min_accrual_dur, &enrollment_rate)
-                    .expect("failed to compute expected minimum enrollment");
-            assert!((expected_enrollment_min_accrual - min_sample_size).abs() < 0.001);
-
-            // Maximum accrual, minimum followup checks
-            let expected_events_max_accrual = expected_events_piecewise_arms(
-                0.5,
-                None,
-                0.018,
-                0.036,
-                &enrollment_rate,
-                max_accrual_dur,
-                min_followup_dur,
-            );
-            assert!((expected_events_max_accrual - 88.).abs() < 0.001);
-            let expected_enrollment_max_accrual =
-                expected_enrollment(max_accrual_dur, &enrollment_rate)
-                    .expect("failed to compute expected minimum enrollment");
-            assert!((expected_enrollment_max_accrual - max_sample_size).abs() < 0.001);
-        } else {
-            panic!()
-        }
-    }
 
     #[test]
     fn ss_range_comparison() {
@@ -227,18 +159,12 @@ mod tests {
         )
         .expect("failed to compute second sample size range");
 
-        // Lower accrual/sample sizes should be the same, and thus
-        // maximum followup should be as well
-        assert_eq!(range_1.min_accrual_dur, range_2.min_accrual_dur);
-        assert_eq!(range_1.min_sample_size, range_2.min_sample_size);
-        assert_eq!(range_1.max_followup_dur, range_2.max_followup_dur);
+        // Lower accrual/sample sizes should be the same
+        assert_eq!(range_1.0, range_2.0);
 
-        // However, minimum accrual of second range should be smaller, since
-        // we stop at steeper dropoff (5% vs. 1%), and thus minimum followup
-        // should be larger
-        assert!(range_1.max_accrual_dur > range_2.max_accrual_dur);
-        assert!(range_1.max_sample_size > range_2.max_sample_size);
-        assert!(range_1.min_followup_dur < range_2.min_followup_dur);
+        // However, maximum sample size of second range should be smaller, since
+        // we stop at steeper dropoff (5% vs. 1%)
+        assert!(range_1.1 > range_2.1);
     }
 
     #[test]

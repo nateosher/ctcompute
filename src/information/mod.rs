@@ -3,7 +3,8 @@
 //----------------------------------------
 pub mod compute_information;
 pub mod error;
-pub mod integrate;
+mod exit_probability;
 mod quadrature;
-pub mod std_normal;
-pub mod types;
+mod std_normal;
+pub mod trial_bounds;
+mod types;

@@ -5,12 +5,10 @@
 
 /// This module houses the public API for computing boundaries, spending
 /// function values, and enrollment times
-pub mod compute;
-mod duration;
-/// This module contains error types
+pub mod duration;
 pub mod error;
-mod events;
-mod information;
-mod sample_size;
-mod spending;
+pub mod events;
+pub mod information;
+pub mod sample_size;
+pub mod spending;
 mod util;
