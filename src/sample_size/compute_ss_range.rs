@@ -3,8 +3,8 @@ use std::f64;
 use crate::duration::min_followup::min_followup;
 use crate::duration::{expected_enrollment::expected_enrollment, types::EnrollmentRate};
 use crate::error::CtcomputeErr;
+use crate::events::events_needed::events_needed;
 use crate::events::expected_events::expected_events_piecewise_arms;
-use crate::information::compute_information::compute_information;
 use crate::spending::types::SpendingFcn;
 use crate::util::root_find::root_find_monotonic;
 
@@ -36,29 +36,17 @@ pub fn compute_ss_range(
     delta: f64,
     perc_change_stop: f64,
 ) -> Result<(usize, usize), CtcomputeErr> {
-    //----------------------------------------
-    // Amount of required information
-    //----------------------------------------
-    #[allow(non_snake_case)]
-    let I = compute_information(
+    let n_events_needed = events_needed(
         alpha,
         power,
-        (lambda_event_trt / lambda_event_ctrl).ln(),
         maybe_lower_spending_fcn_type,
         maybe_upper_spending_fcn_type,
         maybe_look_fractions,
+        prop_treated,
+        lambda_event_trt,
+        lambda_event_ctrl,
         tol,
     )?;
-
-    //----------------------------------------
-    // # of events needed to achieve desired information fraction
-    //----------------------------------------
-    let r = prop_treated / (1. - prop_treated);
-    // Base # events is I / 0.25 = 4I under equal allocation + null hypothesis
-    // TODO: add option to compute under variance under alternative hypothesis
-    // Inflate I according to randomization ratio r:
-    // if p = probability of being in treatment group, r = p / (1 - p)
-    let n_events_needed = ((I * 4.) * (1. + r) * (1. + r) / (4. * r)).ceil();
 
     //----------------------------------------
     // Finding smallest amount of subjects
@@ -104,6 +92,7 @@ pub fn compute_ss_range(
             maybe_lambda_dropout,
             enrollment_rate,
             accrual_time,
+            tol,
         )
     };
 
@@ -208,20 +197,20 @@ mod tests {
             None,                      // upper spending function
             Some(&vec![0.5, 0.7, 1.]), // look fractions
             2. / 3.,                   // prop treated
-            0.4,                       // hazard for treated group
-            0.6,                       // hazard for control group
+            0.04,                      // hazard for treated group
+            0.06,                      // hazard for control group
             Some(0.00878),             // hazard of dropout
             &er,                       // enrollment rate
-            0.00001,                   // tol
+            0.00000001,                // tol
             0.1,                       // delta
             0.0001,                    // min_perc_change
         )
         .expect("failed to compute first sample size range");
 
-        assert_eq!(range.0, 298);
+        assert_eq!(range.0, 349);
         // Again, no set upper bound, but ideally want it to be within
         // ~ 10 patients or so of EAST
-        assert!((range.1 as i64 - 360_i64).abs() < 10);
+        assert!((range.1 as i64 - 752_i64).abs() < 10);
     }
 
     #[test]

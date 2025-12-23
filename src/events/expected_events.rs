@@ -46,14 +46,18 @@ fn expected_events_piecewise(
         .fold(
             (0., 0.),
             |(cumulative_dur, cumulative_expected), (cur_dur, cur_rate)| {
-                let new_events = expected_events_uniform(
-                    lambda_event,
-                    maybe_lambda_dropout,
-                    *cur_rate,
-                    cumulative_dur,
-                    (cumulative_dur + cur_dur).min(accrual_end_time),
-                    followup_end_time,
-                );
+                let new_events = if cumulative_dur < accrual_end_time {
+                    expected_events_uniform(
+                        lambda_event,
+                        maybe_lambda_dropout,
+                        *cur_rate,
+                        cumulative_dur,
+                        (cumulative_dur + cur_dur).min(accrual_end_time),
+                        followup_end_time,
+                    )
+                } else {
+                    0.
+                };
 
                 (cumulative_dur + cur_dur, cumulative_expected + new_events)
             },
@@ -71,6 +75,18 @@ fn expected_events_uniform(
     accrual_end_time: f64,
     followup_end_time: f64,
 ) -> f64 {
+    #[cfg(debug_assertions)]
+    if accrual_end_time > followup_end_time {
+        println!("accrual end time: {accrual_end_time}");
+        println!("followup end time: {followup_end_time}");
+        panic!("accrual end time > followup end time");
+    }
+
+    // Handle this case manually due to numerical issues
+    if followup_end_time == 0. {
+        return 0.;
+    }
+
     let lambda_dropout = match maybe_lambda_dropout {
         Some(l) => l,
         None => 0.0,
@@ -211,5 +227,26 @@ mod tests {
             0.5 * expected_events_piecewise(0.04, Some(0.00878), &enrollment_rate, 21.267, 30.075);
 
         assert!((expected_events_ctrl + expected_events_trt - 256.).abs() < 0.01);
+    }
+
+    #[test]
+    fn piecewise_with_dropout_4() {
+        let enrollment_rate = EnrollmentRate::new(vec![0., 1., 2.], vec![10., 20., 30.])
+            .expect("failed to construct enrollment rate object");
+        let expected_events_ctrl =
+            0.5 * expected_events_piecewise(0.036, None, &enrollment_rate, 4. + 1. / 3., 91.994);
+        let expected_events_trt =
+            0.5 * expected_events_piecewise(0.018, None, &enrollment_rate, 4. + 1. / 3., 91.994);
+
+        println!("{}", expected_events_ctrl + expected_events_trt);
+    }
+
+    #[test]
+    fn problem_case() {
+        let er = EnrollmentRate::new(vec![0., 10., 20.], vec![10., 20., 30.])
+            .expect("failed to construct enrollment rate object");
+
+        let exp_events = expected_events_piecewise_arms(0.5, None, 0.018, 0.036, &er, 10., 21.);
+        dbg!(exp_events);
     }
 }

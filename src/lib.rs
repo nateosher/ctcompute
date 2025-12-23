@@ -11,4 +11,5 @@ pub mod events;
 pub mod information;
 pub mod sample_size;
 pub mod spending;
+pub mod trial;
 mod util;

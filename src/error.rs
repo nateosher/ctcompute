@@ -5,6 +5,7 @@ use crate::duration::error::EnrollmentComputationError;
 pub use crate::information::error::*;
 pub use crate::sample_size::error::*;
 pub use crate::spending::error::*;
+pub use crate::trial::error::*;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -23,4 +24,6 @@ pub enum CtcomputeErr {
     SampleSizeCompute(SampleSizeComputeError),
     #[error("while performing root find: {0}")]
     RootFind(RootFindErr),
+    #[error("while computing trial design: {0}")]
+    TrialCompute(TrialComputeError),
 }

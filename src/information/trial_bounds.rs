@@ -60,9 +60,10 @@ pub fn find_bounds(
         for i in 1..alpha_increments.len() {
             // Assuming we are searching between 0, 7, so start
             // in the middle
+            const ABS_MAX_Z: f64 = 7.;
             let (mut lower_bound, mut upper_bound) = match integral_type {
-                IntegralType::Lower => (-7.0, 0.0),
-                IntegralType::Upper => (0.0, 7.0),
+                IntegralType::Lower => (-ABS_MAX_Z, 0.0),
+                IntegralType::Upper => (0.0, ABS_MAX_Z),
             };
             let mut mid = (lower_bound + upper_bound) / 2.0;
             match integral_type {
@@ -217,5 +218,40 @@ mod tests {
         assert!((bounds[0].1 - 3.928573).abs() < 0.001);
         assert!((bounds[1].1 - 2.669967).abs() < 0.001);
         assert!((bounds[2].1 - 1.981004).abs() < 0.001);
+    }
+
+    #[test]
+    fn ldof_bounds_3_looks_2() {
+        // This is the cumulative alpha spent for LDOF per ldBounds(c(0.3, 0.6, 1.0))
+        let alpha_spend = compute_spending_vec(
+            &vec![1. / 3., 2. / 3., 1.0],
+            0.025,
+            Some(SpendingFcn::LDOF),
+            None,
+        )
+        .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![1. / 3., 2. / 3., 1.], 32, 0.00001).unwrap();
+
+        // These bounds are from gsDesign
+        assert!((bounds[0].0 - -3.710303).abs() < 0.001);
+        assert!((bounds[1].0 - -2.511427).abs() < 0.001);
+        assert!((bounds[2].0 - -1.993048).abs() < 0.001);
+    }
+
+    #[test]
+    fn ldof_bounds_3_looks_3() {
+        // This is the cumulative alpha spent for LDOF per ldBounds(c(0.3, 0.6, 1.0))
+        let alpha_spend =
+            compute_spending_vec(&vec![0.4, 0.8, 1.0], 0.025, Some(SpendingFcn::LDOF), None)
+                .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![0.4, 0.8, 1.], 32, 0.00001).unwrap();
+
+        // These are from EAST; changed info fracs due to weird numerical issues
+        // with 1/3, 2/3
+        assert!((bounds[0].0 - -3.356869).abs() < 0.001);
+        assert!((bounds[1].0 - -2.254642).abs() < 0.001);
+        assert!((bounds[2].0 - -2.025815).abs() < 0.001);
     }
 }

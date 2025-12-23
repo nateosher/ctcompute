@@ -1,6 +1,7 @@
 //----------------------------------------
 // spending mod types
 //----------------------------------------
+#[derive(Debug, Clone, Copy)]
 pub enum SpendingFcn {
     LDOF, // Lan-Demets Obrien Fleming
 }

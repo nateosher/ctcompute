@@ -40,8 +40,19 @@ impl Quadrature {
         // no mass between (a, b), so just put a single point with weight 1
         // between a and b
         if x.is_empty() {
+            let single_point = if theta > b {
+                // Theta must be much larger than b, so choose arbitrary
+                // very large value
+                1_000_000_000.
+            } else if theta < a {
+                // Opposite: theta must be much smaller than a, so choose
+                // arbitrary very small value
+                -1_000_000_000.
+            } else {
+                unreachable!();
+            };
             return Quadrature {
-                z: vec![(a + b) / 2.],
+                z: vec![single_point],
                 w: vec![1.0],
             };
         }

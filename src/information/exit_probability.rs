@@ -10,12 +10,58 @@ fn f_1(z_1: f64, I_1: f64, theta: f64) -> f64 {
     std_normal_pdf(z_1 - theta * I_1.sqrt())
 }
 
+// TODO: clean this up
 #[allow(non_snake_case)]
 fn f_k(z_k_1: f64, I_k_1: f64, z_k: f64, theta: f64, I_k: f64) -> f64 {
+    #[cfg(debug_assertions)]
+    assert!(I_k_1 > 0.);
+
+    #[cfg(debug_assertions)]
+    assert!(I_k > 0.);
+
     let delta_k = I_k - I_k_1;
+    #[cfg(debug_assertions)]
+    assert!(delta_k > 0.);
+
     let sqrt_delta_k = delta_k.sqrt();
-    (I_k.sqrt() / sqrt_delta_k)
-        * std_normal_pdf((z_k * I_k.sqrt() - z_k_1 * I_k_1.sqrt() - theta * delta_k) / sqrt_delta_k)
+    #[cfg(debug_assertions)]
+    assert!(!sqrt_delta_k.is_nan());
+
+    let prod_part_1 = I_k.sqrt() / sqrt_delta_k;
+    let pass_1_1 = z_k * I_k.sqrt();
+    #[cfg(debug_assertions)]
+    if pass_1_1.is_infinite() {
+        println!("z_k: {z_k}");
+        println!("I_k.sqrt(): {}", I_k.sqrt());
+        panic!("infinite pass_1_1");
+    }
+
+    let pass_1_2 = z_k_1 * I_k_1.sqrt();
+    #[cfg(debug_assertions)]
+    assert!(!pass_1_2.is_infinite());
+
+    let pass_1_3 = theta * delta_k;
+    #[cfg(debug_assertions)]
+    assert!(!pass_1_3.is_infinite());
+
+    let pass_1 = pass_1_1 - pass_1_2 - pass_1_3;
+    #[cfg(debug_assertions)]
+    if pass_1.is_nan() {
+        println!("pass_1_1: {pass_1_1}");
+        println!("pass_1_2: {pass_1_2}");
+        println!("pass_1_3: {pass_1_3}");
+        panic!("you already know")
+    }
+    if pass_1.is_nan() {
+        return 0.;
+    }
+
+    let to_pass_to_std_normal_pdf = pass_1 / sqrt_delta_k;
+
+    #[cfg(debug_assertions)]
+    assert!(!to_pass_to_std_normal_pdf.is_nan());
+
+    prod_part_1 * std_normal_pdf(to_pass_to_std_normal_pdf)
 }
 
 // e_k in J&T's notation
@@ -126,4 +172,26 @@ pub fn exit_probability(
     }
 
     res
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exit_prob_1() {
+        let lower_prob = exit_probability(
+            &vec![
+                (-2.437990437182772, f64::INFINITY),
+                (-2.1328125, f64::INFINITY),
+                (-2.078125, f64::INFINITY),
+            ],
+            &vec![0.7, 0.9, 1.0],
+            -34.66,
+            IntegralType::Lower,
+            32,
+        );
+
+        println!("{lower_prob:?}");
+    }
 }

@@ -3,6 +3,9 @@ use crate::information::error::NormalDistErr;
 use probability_rs::{Distribution, dist::normal::Normal};
 
 pub fn std_normal_pdf(z: f64) -> f64 {
+    #[cfg(debug_assertions)]
+    assert!(!z.is_nan());
+
     (-z * z / 2.0).exp() / (2.0 * std::f64::consts::PI).sqrt()
 }
 
@@ -93,6 +96,12 @@ mod tests {
     #[test]
     fn standard_normal_pdf_3() {
         assert_eq!(std_normal_pdf(-1.0), std_normal_pdf(1.0));
+    }
+
+    #[test]
+    fn standard_normal_pdf_extremes() {
+        assert_eq!(std_normal_pdf(f64::MAX), 0.0);
+        assert_eq!(std_normal_pdf(f64::MIN), 0.0);
     }
 
     #[test]
