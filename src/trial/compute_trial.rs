@@ -1,7 +1,7 @@
 use crate::duration::expected_enrollment::expected_enrollment;
 use crate::duration::{
-    expected_enrollment, expected_enrollment_dur::expected_enrollment_dur,
-    min_followup::min_followup, types::EnrollmentRate,
+    expected_enrollment_dur::expected_enrollment_dur, min_followup::min_followup,
+    types::EnrollmentRate,
 };
 use crate::error::{CtcomputeErr, TrialComputeError};
 use crate::events::events_needed::events_needed;
@@ -97,7 +97,6 @@ pub fn compute_trial(
                 .collect(),
         ),
     };
-    dbg!(&maybe_events_by_look);
 
     let maybe_h1_times_to_looks = if let Some(ref events_by_look) = maybe_events_by_look {
         let times_to_looks = events_by_look
@@ -119,7 +118,6 @@ pub fn compute_trial(
     } else {
         None
     };
-    dbg!(&maybe_h1_times_to_looks);
 
     let maybe_h0_times_to_looks = if let Some(ref events_by_look) = maybe_events_by_look {
         let times_to_looks = events_by_look
@@ -192,9 +190,6 @@ pub fn compute_trial(
         } else {
             (None, None)
         };
-
-    dbg!(&maybe_h0_exit_probs);
-    dbg!(&maybe_h1_exit_probs);
 
     //----------------------------------------
     // Accrual duration under H0/H1
@@ -341,22 +336,23 @@ mod tests {
             .expect("failed to construct enrollment rate object");
 
         let trial = compute_trial(
-            100,   // # patients
-            0.025, // alpha
-            0.9,   // power
-            None,  // lower spending fcn
-            None,  // upper spending fcn
-            None,  // info fractions
-            0.5,   // proportion treated
-            0.018, // hazard rate treatment
-            0.036, // hazard rate control
-            None,  // dropout
-            &er,   // enrollment rate
-            64,    // r (sets integral grid size)
-            0.001, // tol
-        );
+            100,    // # patients
+            0.025,  // alpha
+            0.9,    // power
+            None,   // lower spending fcn
+            None,   // upper spending fcn
+            None,   // info fractions
+            0.5,    // proportion treated
+            0.018,  // hazard rate treatment
+            0.036,  // hazard rate control
+            None,   // dropout
+            &er,    // enrollment rate
+            32,     // r (sets integral grid size)
+            0.0001, // tol
+        )
+        .expect("failed to compute trial");
 
-        println!("trial: {trial:#?}");
+        dbg!(trial);
     }
 
     #[test]
@@ -376,11 +372,12 @@ mod tests {
             0.036,                      // hazard rate control
             None,                       // dropout
             &er,                        // enrollment rate
-            64,                         // r (sets integral grid size)
-            0.00001,                    // tol
-        );
+            32,                         // r (sets integral grid size)
+            0.0001,                     // tol
+        )
+        .expect("failed to compute trial");
 
-        println!("trial: {:#?}", trial);
+        dbg!(trial);
     }
 
     #[test]
@@ -402,9 +399,10 @@ mod tests {
             &er,                        // enrollment rate
             32,                         // r (sets integral grid size)
             0.0001,                     // tol
-        );
+        )
+        .expect("failed to compute trial");
 
-        println!("trial: {:#?}", trial);
+        dbg!(trial);
     }
 
     #[test]
@@ -426,8 +424,46 @@ mod tests {
             &er,                         // enrollment rate
             32,                          // r (sets integral grid size)
             0.0001,                      // tol
-        );
+        )
+        .expect("failed to compute trial");
 
-        println!("trial: {:#?}", trial);
+        dbg!(trial);
+    }
+
+    #[test]
+    fn simple_three_look_3() {
+        let er = EnrollmentRate::new(vec![0., 5.], vec![3., 6.])
+            .expect("failed to construct enrollment rate object");
+        let maybe_custom_spend = Some(&SpendingFcn::Custom {
+            cumulative_spend: vec![0.005, 0.015, 0.025],
+        });
+
+        let trial = compute_trial(
+            188,                         // # patients
+            0.025,                       // alpha
+            0.9,                         // power
+            maybe_custom_spend,          // lower spending fcn
+            None,                        // upper spending fcn
+            Some(&vec![0.5, 0.75, 1.0]), // info fractions
+            0.5,                         // proportion treated
+            0.018,                       // hazard rate treatment
+            0.036,                       // hazard rate control
+            Some(0.00878),               // dropout
+            &er,                         // enrollment rate
+            32,                          // r (sets integral grid size)
+            0.0001,                      // tol
+        )
+        .expect("failed to compute trial");
+
+        assert!((trial.accrual_duration - 33.833).abs() < 0.001);
+        assert!((trial.trial_duration - 50.366).abs() < 0.001);
+        assert_eq!(trial.n_events, 92);
+        assert_eq!(trial.n_patients, 188);
+        assert!((trial.maybe_h0_expected_accrual_duration.unwrap() - 33.795).abs() < 0.001);
+        assert!((trial.maybe_h1_expected_accrual_duration.unwrap() - 32.47).abs() < 0.01);
+        assert!((trial.maybe_h0_expected_trial_duration.unwrap() - 40.733).abs() < 0.001);
+        assert!((trial.maybe_h1_expected_trial_duration.unwrap() - 38.296).abs() < 0.01);
+        assert!((trial.maybe_h0_expected_sample_size.unwrap() - 187.771).abs() < 0.001);
+        assert!((trial.maybe_h1_expected_sample_size.unwrap() - 179.821).abs() < 0.01);
     }
 }

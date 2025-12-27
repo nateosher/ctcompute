@@ -68,4 +68,13 @@ mod tests {
 
         assert_eq!(expected_n, 297.);
     }
+
+    #[test]
+    fn expected_enrollment_4() {
+        let er = EnrollmentRate::new(vec![0., 5.], vec![3., 6.])
+            .expect("failed to construct enrollment rate object");
+
+        let expected_n = expected_enrollment(27.5, &er).unwrap();
+        assert_eq!(expected_n, 150.);
+    }
 }

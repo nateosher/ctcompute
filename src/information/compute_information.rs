@@ -56,19 +56,19 @@ pub fn compute_information(
             .sum();
     let mut max_power = max_power_lower + max_power_upper;
 
-    // while max_power < target_power && (max_power - 1.0).abs() > 0.00000001 {
-    //     upper_I *= 2.;
-    //     max_theta = delta * upper_I.sqrt();
-    //     max_power_lower =
-    //         exit_probability(&bounds, look_fractions, max_theta, IntegralType::Lower, 32)
-    //             .iter()
-    //             .sum();
-    //     max_power_upper =
-    //         exit_probability(&bounds, look_fractions, max_theta, IntegralType::Upper, 32)
-    //             .iter()
-    //             .sum();
-    //     max_power = max_power_lower + max_power_upper;
-    // }
+    while max_power < target_power && (max_power - 1.0).abs() > 0.00000001 {
+        upper_I *= 2.;
+        max_theta = delta * upper_I.sqrt();
+        max_power_lower =
+            exit_probability(&bounds, look_fractions, max_theta, IntegralType::Lower, 32)
+                .iter()
+                .sum();
+        max_power_upper =
+            exit_probability(&bounds, look_fractions, max_theta, IntegralType::Upper, 32)
+                .iter()
+                .sum();
+        max_power = max_power_lower + max_power_upper;
+    }
 
     #[allow(non_snake_case)]
     let mut cur_I: f64 = (lower_I + upper_I) / 2.0;
