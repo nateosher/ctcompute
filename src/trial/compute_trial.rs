@@ -16,8 +16,8 @@ pub fn compute_trial(
     n_patients: usize,
     alpha: f64,
     power: f64,
-    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
-    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+    maybe_lower_spending_fcn_type: Option<&SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<&SpendingFcn>,
     maybe_look_fractions: Option<&Vec<f64>>,
     prop_treated: f64,
     lambda_event_trt: f64,
@@ -309,6 +309,11 @@ pub fn compute_trial(
     }?;
 
     //----------------------------------------
+    // Expected events
+    //----------------------------------------
+    // TODO
+
+    //----------------------------------------
     // Return result
     //----------------------------------------
     Ok(Trial {
@@ -363,7 +368,7 @@ mod tests {
             400,                        // # patients
             0.025,                      // alpha
             0.9,                        // power
-            Some(SpendingFcn::LDOF),    // lower spending fcn
+            Some(&SpendingFcn::LDOF),   // lower spending fcn
             None,                       // upper spending fcn
             Some(&vec![0.7, 0.9, 1.0]), // info fractions
             0.5,                        // proportion treated
@@ -387,7 +392,7 @@ mod tests {
             80,                         // # patients
             0.025,                      // alpha
             0.9,                        // power
-            Some(SpendingFcn::LDOF),    // lower spending fcn
+            Some(&SpendingFcn::LDOF),   // lower spending fcn
             None,                       // upper spending fcn
             Some(&vec![0.4, 0.8, 1.0]), // info fractions
             0.5,                        // proportion treated
@@ -397,6 +402,30 @@ mod tests {
             &er,                        // enrollment rate
             32,                         // r (sets integral grid size)
             0.0001,                     // tol
+        );
+
+        println!("trial: {:#?}", trial);
+    }
+
+    #[test]
+    fn simple_three_look_2() {
+        let er = EnrollmentRate::new(vec![0., 5.], vec![3., 6.])
+            .expect("failed to construct enrollment rate object");
+
+        let trial = compute_trial(
+            80,                          // # patients
+            0.025,                       // alpha
+            0.9,                         // power
+            Some(&SpendingFcn::LDOF),    // lower spending fcn
+            None,                        // upper spending fcn
+            Some(&vec![0.2, 0.75, 1.0]), // info fractions
+            2. / 3.,                     // proportion treated
+            0.018,                       // hazard rate treatment
+            0.036,                       // hazard rate control
+            Some(0.00878),               // dropout
+            &er,                         // enrollment rate
+            32,                          // r (sets integral grid size)
+            0.0001,                      // tol
         );
 
         println!("trial: {:#?}", trial);

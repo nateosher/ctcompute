@@ -193,8 +193,8 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![0.7, 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
         )
         .unwrap();
         let bounds = find_bounds(&alpha_spend, &vec![0.7, 1.0], 32, 0.0001).unwrap();
@@ -209,8 +209,8 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![0.3, 0.6, 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
         )
         .unwrap();
         let bounds = find_bounds(&alpha_spend, &vec![0.3, 0.6, 1.0], 32, 0.00001).unwrap();
@@ -226,7 +226,7 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![1. / 3., 2. / 3., 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
             None,
         )
         .unwrap();
@@ -243,7 +243,7 @@ mod tests {
     fn ldof_bounds_3_looks_3() {
         // This is the cumulative alpha spent for LDOF per ldBounds(c(0.3, 0.6, 1.0))
         let alpha_spend =
-            compute_spending_vec(&vec![0.4, 0.8, 1.0], 0.025, Some(SpendingFcn::LDOF), None)
+            compute_spending_vec(&vec![0.4, 0.8, 1.0], 0.025, Some(&SpendingFcn::LDOF), None)
                 .unwrap();
 
         let bounds = find_bounds(&alpha_spend, &vec![0.4, 0.8, 1.], 32, 0.00001).unwrap();

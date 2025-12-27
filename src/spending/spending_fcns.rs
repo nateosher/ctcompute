@@ -1,5 +1,5 @@
 use crate::error::CtcomputeErr;
-use crate::information::std_normal::{self, std_normal_cdf, std_normal_quantile};
+use crate::information::std_normal::{std_normal_cdf, std_normal_quantile};
 use crate::spending::{
     error::SpendingFcnErr,
     types::{AlphaSpendingValues, SpendingFcn},
@@ -11,8 +11,8 @@ use crate::spending::{
 pub fn compute_spending_vec(
     look_fractions: &Vec<f64>,
     alpha: f64,
-    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
-    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+    maybe_lower_spending_fcn_type: Option<&SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<&SpendingFcn>,
 ) -> Result<AlphaSpendingValues, CtcomputeErr> {
     //----------------------------------------
     // Check arguments
@@ -33,35 +33,49 @@ pub fn compute_spending_vec(
 
     //----------------------------------------
     // Compute alpha spend
-    let maybe_lower_spending_fcn = match maybe_lower_spending_fcn_type {
-        Some(SpendingFcn::LDOF) => Some(lan_demets_obrien_fleming),
-        None => None,
-    };
-
-    let maybe_lower_spending_bound: Option<Vec<f64>> = match maybe_lower_spending_fcn {
-        Some(spending_fcn) => look_fractions
+    let maybe_lower_spending_values = match maybe_lower_spending_fcn_type {
+        Some(SpendingFcn::LDOF) => look_fractions
             .iter()
-            .map(|&t| spending_fcn(t, alpha))
+            .map(|&t| lan_demets_obrien_fleming(t, alpha))
             .collect::<Result<Vec<f64>, CtcomputeErr>>()
-            .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
+            .map(Some)?,
+        Some(SpendingFcn::Custom { cumulative_spend }) => {
+            if cumulative_spend.len() != look_fractions.len() {
+                return Err(SpendingFcnErr::MismatchedLengths.into());
+            }
+            if cumulative_spend[cumulative_spend.len() - 1] != alpha {
+                return Err(SpendingFcnErr::BadLastSpend(
+                    cumulative_spend[cumulative_spend.len() - 1],
+                )
+                .into());
+            }
+            Ok(Some(cumulative_spend.clone()))
+        }?,
         None => None,
     };
 
-    let maybe_upper_spending_fcn = match maybe_upper_spending_fcn_type {
-        Some(SpendingFcn::LDOF) => Some(lan_demets_obrien_fleming),
-        None => None,
-    };
-
-    let maybe_upper_spending_bound: Option<Vec<f64>> = match maybe_upper_spending_fcn {
-        Some(spending_fcn) => look_fractions
+    let maybe_upper_spending_values = match maybe_upper_spending_fcn_type {
+        Some(SpendingFcn::LDOF) => look_fractions
             .iter()
-            .map(|&t| spending_fcn(t, alpha))
+            .map(|&t| lan_demets_obrien_fleming(t, alpha))
             .collect::<Result<Vec<f64>, CtcomputeErr>>()
-            .map(Some)?, // Turns into Result<Option<Vec<f64>>, CtsimErr>
+            .map(Some)?,
+        Some(SpendingFcn::Custom { cumulative_spend }) => {
+            if cumulative_spend.len() != look_fractions.len() {
+                return Err(SpendingFcnErr::MismatchedLengths.into());
+            }
+            if cumulative_spend[cumulative_spend.len() - 1] != alpha {
+                return Err(SpendingFcnErr::BadLastSpend(
+                    cumulative_spend[cumulative_spend.len() - 1],
+                )
+                .into());
+            }
+            Ok(Some(cumulative_spend.clone()))
+        }?,
         None => None,
     };
 
-    match (maybe_lower_spending_bound, maybe_upper_spending_bound) {
+    match (maybe_lower_spending_values, maybe_upper_spending_values) {
         (Some(lower), Some(upper)) => Ok(AlphaSpendingValues::TwoSided((lower, upper))),
         (None, Some(upper)) => Ok(AlphaSpendingValues::OneSidedUpper(upper)),
 
@@ -117,8 +131,8 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![0.7, 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
         )
         .unwrap();
 
@@ -135,8 +149,8 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![0.3, 0.6, 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
         )
         .unwrap();
 
@@ -155,7 +169,7 @@ mod tests {
         let alpha_spend = compute_spending_vec(
             &vec![1. / 3., 2. / 3., 1.0],
             0.025,
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
             None,
         )
         .unwrap();
@@ -164,6 +178,27 @@ mod tests {
             assert!((lower[0] - 0.0001035057).abs() < 0.0001);
             assert!((lower[1] - lower[0] - 0.0059448834).abs() < 0.0001);
             assert!((lower[2] - lower[1] - lower[0] - 0.0189516109).abs() < 0.001);
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn custom_1() {
+        let alpha_spend_custom = compute_spending_vec(
+            &vec![0.3, 0.6, 1.0],
+            0.025,
+            Some(&SpendingFcn::Custom {
+                cumulative_spend: vec![0.01, 0.02, 0.025],
+            }),
+            Some(&SpendingFcn::Custom {
+                cumulative_spend: vec![0.1, 0.2, 0.025],
+            }),
+        );
+
+        if let Ok(AlphaSpendingValues::TwoSided((lower_spend, upper_spend))) = alpha_spend_custom {
+            assert_eq!(lower_spend, vec![0.01, 0.02, 0.025]);
+            assert_eq!(upper_spend, vec![0.1, 0.2, 0.025]);
         } else {
             panic!()
         }

@@ -16,6 +16,8 @@ pub enum SpendingFcnErr {
     BadAlpha(f64),
     #[error("must specify at least one spending function")]
     NoSpendingFunctionSpecified,
+    #[error("alpha vector should be same length as look fraction vector")]
+    MismatchedLengths,
 }
 
 impl Into<CtcomputeErr> for SpendingFcnErr {

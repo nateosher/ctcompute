@@ -24,8 +24,8 @@ use crate::util::root_find::root_find_monotonic;
 pub fn compute_ss_range(
     alpha: f64,
     power: f64,
-    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
-    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+    maybe_lower_spending_fcn_type: Option<&SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<&SpendingFcn>,
     maybe_look_fractions: Option<&Vec<f64>>,
     prop_treated: f64,
     lambda_event_trt: f64,
@@ -193,7 +193,7 @@ mod tests {
         let range = compute_ss_range(
             0.025,                     // alpha
             0.9,                       // power
-            Some(SpendingFcn::LDOF),   // lower spending function
+            Some(&SpendingFcn::LDOF),  // lower spending function
             None,                      // upper spending function
             Some(&vec![0.5, 0.7, 1.]), // look fractions
             2. / 3.,                   // prop treated
@@ -220,7 +220,7 @@ mod tests {
         let range = compute_ss_range(
             0.025,                     // alpha
             0.9,                       // power
-            Some(SpendingFcn::LDOF),   // lower spending function
+            Some(&SpendingFcn::LDOF),  // lower spending function
             None,                      // upper spending function
             Some(&vec![0.3, 0.8, 1.]), // look fractions
             0.5,                       // prop treated

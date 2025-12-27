@@ -7,8 +7,8 @@ use crate::spending::types::SpendingFcn;
 pub fn events_needed(
     alpha: f64,
     power: f64,
-    maybe_lower_spending_fcn_type: Option<SpendingFcn>,
-    maybe_upper_spending_fcn_type: Option<SpendingFcn>,
+    maybe_lower_spending_fcn_type: Option<&SpendingFcn>,
+    maybe_upper_spending_fcn_type: Option<&SpendingFcn>,
     maybe_look_fractions: Option<&Vec<f64>>,
     prop_treated: f64,
     lambda_event_trt: f64,
@@ -57,7 +57,7 @@ mod tests {
         let n_needed = events_needed(
             0.025,
             0.9,
-            Some(SpendingFcn::LDOF),
+            Some(&SpendingFcn::LDOF),
             None,
             Some(&vec![0.5, 0.7, 1.0]),
             2. / 3.,
