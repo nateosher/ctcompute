@@ -254,4 +254,58 @@ mod tests {
         assert!((bounds[1].0 - -2.254642).abs() < 0.001);
         assert!((bounds[2].0 - -2.025815).abs() < 0.001);
     }
+
+    #[test]
+    fn ldof_bounds_3_looks_4() {
+        // This is the cumulative alpha spent for LDOF per ldBounds(c(0.3, 0.6, 1.0))
+        let alpha_spend =
+            compute_spending_vec(&vec![0.2, 0.75, 1.0], 0.025, Some(&SpendingFcn::LDOF), None)
+                .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![0.2, 0.75, 1.], 32, 0.00001).unwrap();
+
+        // From gsdesign
+        assert!((bounds[0].0 - -4.8768).abs() < 0.001);
+        assert!((bounds[1].0 - -2.3397).abs() < 0.001);
+        assert!((bounds[2].0 - -2.0118).abs() < 0.001);
+    }
+
+    #[test]
+    fn custom_bounds() {
+        let alpha_spend = compute_spending_vec(
+            &vec![0.2, 0.75, 1.],
+            0.025,
+            Some(&SpendingFcn::Custom {
+                cumulative_spend: vec![0.001, 0.016, 0.025],
+            }),
+            None,
+        )
+        .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![0.2, 0.75, 1.], 32, 0.00001).unwrap();
+
+        assert!((bounds[0].0 - -3.090).abs() < 0.001);
+        assert!((bounds[1].0 - -2.162).abs() < 0.001);
+        assert!((bounds[2].0 - -2.114).abs() < 0.001);
+    }
+
+    #[test]
+    fn custom_bounds_2() {
+        let alpha_spend = compute_spending_vec(
+            &vec![0.5, 0.8, 1.],
+            0.025,
+            Some(&SpendingFcn::Custom {
+                cumulative_spend: vec![0.0001, 0.005, 0.025],
+            }),
+            None,
+        )
+        .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![0.5, 0.8, 1.], 32, 0.00001).unwrap();
+        dbg!(&bounds);
+
+        assert!((bounds[0].0 - -3.719).abs() < 0.001);
+        assert!((bounds[1].0 - -2.577).abs() < 0.001);
+        assert!((bounds[2].0 - -1.970).abs() < 0.001);
+    }
 }
