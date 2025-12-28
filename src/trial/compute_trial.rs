@@ -321,7 +321,6 @@ mod tests {
             0.0001,                     // tol
         )
         .expect("failed to compute trial");
-        dbg!(&trial);
 
         assert!((trial.accrual_duration - 23.333).abs() < 0.001);
         assert!((trial.trial_duration - 24.46).abs() < 0.001);
@@ -473,8 +472,6 @@ mod tests {
         );
 
         let trial = trial_res.unwrap();
-
-        dbg!(&trial);
 
         assert!((trial.accrual_duration - 50.).abs() < 0.001);
         assert!((trial.trial_duration - 74.154).abs() < 0.001);

@@ -3,9 +3,9 @@ use crate::duration::error::EnrollmentComputationError;
 // Crate error type
 //----------------------------------------
 pub use crate::information::error::*;
-pub use crate::sample_size::error::*;
 pub use crate::spending::error::*;
 pub use crate::trial::error::*;
+pub use crate::trial_characteristics::error::*;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

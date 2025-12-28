@@ -5,8 +5,8 @@ use crate::information::{
     exit_probability::exit_probability, std_normal::std_normal_quantile, trial_bounds::find_bounds,
     types::IntegralType,
 };
-use crate::sample_size::error::InformationComputeError;
 use crate::spending::{spending_fcns::compute_spending_vec, types::SpendingFcn};
+use crate::trial_characteristics::error::InformationComputeError;
 
 // TODO: specify hypothesis type, i.e. whether upper or lower exit or both count
 // as success
