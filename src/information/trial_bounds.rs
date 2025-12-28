@@ -302,10 +302,44 @@ mod tests {
         .unwrap();
 
         let bounds = find_bounds(&alpha_spend, &vec![0.5, 0.8, 1.], 32, 0.00001).unwrap();
-        dbg!(&bounds);
 
         assert!((bounds[0].0 - -3.719).abs() < 0.001);
         assert!((bounds[1].0 - -2.577).abs() < 0.001);
         assert!((bounds[2].0 - -1.970).abs() < 0.001);
+    }
+
+    #[test]
+    fn ldof_3_looks_5() {
+        let alpha_spend =
+            compute_spending_vec(&vec![0.7, 0.9, 1.], 0.025, Some(&SpendingFcn::LDOF), None)
+                .unwrap();
+
+        let bounds = find_bounds(&alpha_spend, &vec![0.7, 0.9, 1.], 32, 0.00001).unwrap();
+
+        assert!((bounds[0].0 - -2.438).abs() < 0.001);
+        assert!((bounds[1].0 - -2.146).abs() < 0.001);
+        assert!((bounds[2].0 - -2.069).abs() < 0.001);
+    }
+
+    #[test]
+    fn custom_five_looks() {
+        let alpha_spend = compute_spending_vec(
+            &vec![0.1, 0.3, 0.5, 0.8, 1.],
+            0.025,
+            Some(&SpendingFcn::Custom {
+                cumulative_spend: vec![0.0001, 0.0005, 0.001, 0.005, 0.025],
+            }),
+            None,
+        )
+        .unwrap();
+
+        let bounds =
+            find_bounds(&alpha_spend, &vec![0.1, 0.3, 0.5, 0.8, 1.], 64, 0.00000001).unwrap();
+
+        assert!((bounds[0].0 - -3.719).abs() < 0.001);
+        assert!((bounds[1].0 - -3.346).abs() < 0.001);
+        assert!((bounds[2].0 - -3.237).abs() < 0.001);
+        assert!((bounds[3].0 - -2.618).abs() < 0.001);
+        assert!((bounds[4].0 - -1.974).abs() < 0.001);
     }
 }

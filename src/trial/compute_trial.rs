@@ -44,8 +44,6 @@ pub fn compute_trial(
         tol,
     )?;
 
-    dbg!(I);
-
     let n_events = events_needed(
         alpha,
         power,
@@ -57,8 +55,6 @@ pub fn compute_trial(
         lambda_event_ctrl,
         tol,
     )?;
-
-    dbg!(n_events);
 
     if n_patients < n_events as usize {
         return Err(TrialComputeError::InsufficientSampleSize {
@@ -76,7 +72,6 @@ pub fn compute_trial(
     //----------------------------------------
     // Followup duration
     //----------------------------------------
-
     let trial_duration = min_followup(
         n_events,
         prop_treated,
@@ -91,7 +86,6 @@ pub fn compute_trial(
     //----------------------------------------
     // Exit probabilities by look
     //----------------------------------------
-
     let events_by_look: Vec<f64> = match maybe_look_fractions {
         None => vec![n_events],
         Some(look_fractions) => look_fractions
@@ -185,7 +179,6 @@ pub fn compute_trial(
     //----------------------------------------
     // Accrual duration under H0/H1
     //----------------------------------------
-
     let h0_expected_accrual_duration = h0_exit_probs
         .iter()
         .zip(h0_times_to_looks.iter())
@@ -201,7 +194,6 @@ pub fn compute_trial(
     //----------------------------------------
     // Trial duration under H0/H1
     //----------------------------------------
-
     let h0_expected_trial_duration = h0_exit_probs
         .iter()
         .zip(h0_times_to_looks.iter())
@@ -217,7 +209,6 @@ pub fn compute_trial(
     //----------------------------------------
     // Sample size under H0/H1
     //----------------------------------------
-
     let h0_expected_sample_size = {
         let h0_expected_ss_vec_res = h0_exit_probs
             .iter()
@@ -297,7 +288,16 @@ mod tests {
         )
         .expect("failed to compute trial");
 
-        dbg!(trial);
+        assert!((trial.accrual_duration - 4.333).abs() < 0.001);
+        assert!((trial.trial_duration - 91.994).abs() < 0.001);
+        assert_eq!(trial.n_events, 88);
+        assert_eq!(trial.n_patients, 100);
+        assert!((trial.h0_expected_accrual_duration - 4.333).abs() < 0.001);
+        assert!((trial.h1_expected_accrual_duration - 4.333).abs() < 0.001);
+        assert!((trial.h0_expected_trial_duration - 61.485).abs() < 0.001);
+        assert!((trial.h1_expected_trial_duration - 91.994).abs() < 0.001);
+        assert!((trial.h0_expected_sample_size - 100.).abs() < 0.001);
+        assert!((trial.h1_expected_sample_size - 100.).abs() < 0.001);
     }
 
     #[test]
@@ -321,8 +321,18 @@ mod tests {
             0.0001,                     // tol
         )
         .expect("failed to compute trial");
+        dbg!(&trial);
 
-        dbg!(trial);
+        assert!((trial.accrual_duration - 23.333).abs() < 0.001);
+        assert!((trial.trial_duration - 24.46).abs() < 0.001);
+        assert_eq!(trial.n_events, 91);
+        assert_eq!(trial.n_patients, 400);
+        assert!((trial.h0_expected_accrual_duration - 21.938).abs() < 0.1);
+        assert!((trial.h1_expected_accrual_duration - 21.881).abs() < 0.1);
+        assert!((trial.h0_expected_trial_duration - 21.935).abs() < 0.1);
+        assert!((trial.h1_expected_trial_duration - 22.062).abs() < 0.1);
+        assert!((trial.h0_expected_sample_size - 358.135).abs() < 0.1);
+        assert!((trial.h1_expected_sample_size - 356.432).abs() < 1.);
     }
 
     #[test]
@@ -436,5 +446,45 @@ mod tests {
         assert!((trial.h1_expected_trial_duration - 38.296).abs() < 0.01);
         assert!((trial.h0_expected_sample_size - 187.771).abs() < 0.001);
         assert!((trial.h1_expected_sample_size - 179.821).abs() < 0.01);
+    }
+
+    #[test]
+    fn five_looks() {
+        let er = EnrollmentRate::new(vec![0.], vec![3.])
+            .expect("failed to construct enrollment rate object");
+        let maybe_custom_spend = Some(&SpendingFcn::Custom {
+            cumulative_spend: vec![0.0001, 0.0005, 0.001, 0.005, 0.025],
+        });
+
+        let trial_res = compute_trial(
+            150,                                 // # patients
+            0.025,                               // alpha
+            0.9,                                 // power
+            maybe_custom_spend,                  // lower spending fcn
+            None,                                // upper spending fcn
+            Some(&vec![0.1, 0.3, 0.5, 0.8, 1.]), // info fractions
+            0.5,                                 // proportion treated
+            0.018,                               // hazard rate treatment
+            0.036,                               // hazard rate control
+            Some(0.00878),                       // dropout
+            &er,                                 // enrollment rate
+            32,                                  // r (sets integral grid size)
+            0.000001,                            // tol
+        );
+
+        let trial = trial_res.unwrap();
+
+        dbg!(&trial);
+
+        assert!((trial.accrual_duration - 50.).abs() < 0.001);
+        assert!((trial.trial_duration - 74.154).abs() < 0.001);
+        assert_eq!(trial.n_events, 88);
+        assert_eq!(trial.n_patients, 150);
+        assert!((trial.h0_expected_accrual_duration - 49.975).abs() < 0.01);
+        assert!((trial.h1_expected_accrual_duration - 47.712).abs() < 0.03);
+        assert!((trial.h0_expected_trial_duration - 58.634).abs() < 0.01);
+        assert!((trial.h1_expected_trial_duration - 59.981).abs() < 0.3);
+        assert!((trial.h0_expected_sample_size - 149.926).abs() < 0.01);
+        assert!((trial.h1_expected_sample_size - 143.137).abs() < 0.1);
     }
 }
